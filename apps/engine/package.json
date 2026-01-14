@@ -1,0 +1,31 @@
+{
+	"name": "@llm-court/engine",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"bin": {
+		"llm-court": "./src/cli.ts"
+	},
+	"scripts": {
+		"dev": "bun run src/cli.ts",
+		"build": "bun build src/cli.ts --outdir dist --target node",
+		"check-types": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@llm-court/shared": "workspace:*",
+		"ai": "catalog:",
+		"@ai-sdk/openai": "catalog:",
+		"@ai-sdk/anthropic": "catalog:",
+		"@ai-sdk/google": "catalog:",
+		"commander": "catalog:",
+		"uuid": "catalog:",
+		"p-limit": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@llm-court/config": "workspace:*",
+		"@types/node": "^22.0.0",
+		"@types/uuid": "^10.0.0",
+		"typescript": "catalog:"
+	}
+}
