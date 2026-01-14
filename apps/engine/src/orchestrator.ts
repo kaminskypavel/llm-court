@@ -4,6 +4,7 @@
  */
 
 import { writeFile } from "node:fs/promises";
+import { logger as baseLogger } from "@llm-court/logs";
 import { SPEC_VERSION } from "@llm-court/shared/constants";
 import type { DebateConfig, DebateOutput } from "@llm-court/shared/types";
 import { getNextCandidate, runDebateRound } from "./debate/engine.js";
@@ -35,12 +36,18 @@ const createLogger = (
 	jsonLogs: boolean,
 	debugEnabled: boolean,
 ): Logger => {
+	// Create scoped loggers for different components
+	const debateLog = baseLogger.scope("Debate");
+	const agentLog = baseLogger.scope("Agent");
+	const judgeLog = baseLogger.scope("Judge");
+
 	const log = (
 		level: string,
 		event: string,
 		data?: Record<string, unknown>,
 	) => {
 		if (jsonLogs) {
+			// JSON mode for machine processing
 			console.error(
 				JSON.stringify({
 					ts: new Date().toISOString(),
@@ -50,8 +57,28 @@ const createLogger = (
 					...data,
 				}),
 			);
-		} else if (level === "error" || level === "warn" || debugEnabled) {
-			console.error(`[${level.toUpperCase()}] ${event}`, data ?? "");
+		} else {
+			// Pretty mode using scoped logger
+			const dataStr = data ? ` ${JSON.stringify(data)}` : "";
+			if (event.startsWith("agent_")) {
+				if (level === "warn") agentLog.warn(`${event}${dataStr}`);
+				else if (level === "error") agentLog.error(`${event}${dataStr}`);
+				else if (level === "debug" && debugEnabled)
+					agentLog.debug(`${event}${dataStr}`);
+				else if (level === "info") agentLog.info(`${event}${dataStr}`);
+			} else if (event.startsWith("judge_")) {
+				if (level === "warn") judgeLog.warn(`${event}${dataStr}`);
+				else if (level === "error") judgeLog.error(`${event}${dataStr}`);
+				else if (level === "debug" && debugEnabled)
+					judgeLog.debug(`${event}${dataStr}`);
+				else if (level === "info") judgeLog.info(`${event}${dataStr}`);
+			} else {
+				if (level === "warn") debateLog.warn(`${event}${dataStr}`);
+				else if (level === "error") debateLog.error(`${event}${dataStr}`);
+				else if (level === "debug" && debugEnabled)
+					debateLog.debug(`${event}${dataStr}`);
+				else if (level === "info") debateLog.info(`${event}${dataStr}`);
+			}
 		}
 	};
 

@@ -61,7 +61,11 @@ const BOLD = "\x1b[1m";
 const DIM = "\x1b[2m";
 
 // Check if we're in a browser environment
-const isBrowser = typeof window !== "undefined";
+// Use globalThis to avoid TS errors in Node-only compilation
+const isBrowser =
+	typeof globalThis !== "undefined" &&
+	"window" in globalThis &&
+	typeof (globalThis as { window?: unknown }).window !== "undefined";
 
 // Check if we're in a Node.js environment (has process.env)
 const hasProcessEnv =

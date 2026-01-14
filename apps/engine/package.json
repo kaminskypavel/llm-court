@@ -12,6 +12,7 @@
 		"check-types": "tsc --noEmit"
 	},
 	"dependencies": {
+		"@llm-court/logs": "workspace:*",
 		"@llm-court/shared": "workspace:*",
 		"ai": "catalog:",
 		"@ai-sdk/openai": "catalog:",
