@@ -1,0 +1,3 @@
+{
+	"extends": "@5-things-done/config/tsconfig.base.json"
+}

@@ -1,0 +1,13 @@
+{
+	"name": "@llm-court/logs",
+	"version": "1.0.0",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"devDependencies": {
+		"@llm-court/config": "workspace:*",
+		"typescript": "catalog:"
+	},
+	"dependencies": {}
+}
