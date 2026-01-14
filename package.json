@@ -1,34 +1,57 @@
 {
-  "name": "my-better-t-app",
-  "private": true,
-  "workspaces": {
-    "packages": [
-      "apps/*",
-      "packages/*"
-    ],
-    "catalog": {
-      "dotenv": "^17.2.2",
-      "zod": "^4.1.13",
-      "typescript": "^5"
-    }
-  },
-  "type": "module",
-  "scripts": {
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "check-types": "turbo check-types",
-    "dev:native": "turbo -F native dev",
-    "dev:web": "turbo -F web dev"
-  },
-  "dependencies": {
-    "@my-better-t-app/env": "workspace:*",
-    "dotenv": "catalog:",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
-    "@my-better-t-app/config": "workspace:*",
-    "turbo": "^2.6.3",
-    "typescript": "catalog:"
-  },
-  "packageManager": "bun@1.3.5"
+	"name": "llm-court",
+	"private": true,
+	"workspaces": {
+		"packages": [
+			"apps/*",
+			"packages/*"
+		],
+		"catalog": {
+			"dotenv": "^17.2.2",
+			"zod": "^4.1.13",
+			"typescript": "^5",
+			"commander": "^14.0.0",
+			"ai": "^4.3.0",
+			"@ai-sdk/openai": "^1.3.0",
+			"@ai-sdk/anthropic": "^1.2.0",
+			"@ai-sdk/google": "^1.2.0",
+			"uuid": "^11.1.0",
+			"p-limit": "^6.2.0"
+		}
+	},
+	"type": "module",
+	"scripts": {
+		"dev": "turbo dev",
+		"build": "turbo build",
+		"check-types": "turbo check-types",
+		"dev:engine": "turbo -F @llm-court/engine dev",
+		"dev:web": "turbo -F @llm-court/web dev",
+		"debate": "bun run apps/engine/src/cli.ts debate",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"format": "biome format --write .",
+		"prepare": "husky"
+	},
+	"dependencies": {
+		"@llm-court/env": "workspace:*",
+		"dotenv": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.0",
+		"@llm-court/config": "workspace:*",
+		"@types/node": "^22.13.14",
+		"@typescript/native-preview": "^7.0.0-dev.20260113.1",
+		"husky": "^9.1.7",
+		"lint-staged": "^16.1.2",
+		"turbo": "^2.6.3",
+		"typescript": "catalog:",
+		"ultracite": "^7.0.11"
+	},
+	"lint-staged": {
+		"*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+			"biome check --write"
+		]
+	},
+	"packageManager": "bun@1.3.5"
 }
