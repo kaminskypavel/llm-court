@@ -1,0 +1,43 @@
+{
+	"topic": "Is functional programming better than object-oriented programming for large-scale applications?",
+	"initialQuery": "Consider maintainability, scalability, team collaboration, and real-world adoption.",
+	"agents": [
+		{
+			"id": "codex-advocate",
+			"model": {
+				"provider": "codex",
+				"model": "o4-mini",
+				"cliPath": "/opt/homebrew/bin/codex",
+				"reasoningEffort": "high"
+			},
+			"systemPrompt": "You advocate for functional programming paradigms.",
+			"temperature": 0.7
+		},
+		{
+			"id": "gemini-advocate",
+			"model": {
+				"provider": "gemini-cli",
+				"model": "gemini-2.5-pro",
+				"cliPath": "/opt/homebrew/bin/gemini"
+			},
+			"systemPrompt": "You advocate for object-oriented programming paradigms.",
+			"temperature": 0.7
+		},
+		{
+			"id": "codex-pragmatic",
+			"model": {
+				"provider": "codex",
+				"model": "o4-mini",
+				"cliPath": "/opt/homebrew/bin/codex",
+				"reasoningEffort": "medium"
+			},
+			"systemPrompt": "You are a pragmatic architect who believes in using the right tool for the job.",
+			"temperature": 0.7
+		}
+	],
+	"judges": [],
+	"judgePanelEnabled": false,
+	"maxAgentRounds": 3,
+	"consensusThreshold": 0.67,
+	"contextTopology": "last_round_with_self"
+}

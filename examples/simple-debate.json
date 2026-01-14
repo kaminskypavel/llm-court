@@ -1,0 +1,70 @@
+{
+	"topic": "Is functional programming better than object-oriented programming for large-scale applications?",
+	"initialQuery": "Consider maintainability, scalability, team collaboration, and real-world adoption when forming your position.",
+	"agents": [
+		{
+			"id": "agent-fp",
+			"model": {
+				"provider": "openai",
+				"model": "gpt-4o-mini"
+			},
+			"systemPrompt": "You are an advocate for functional programming paradigms. Argue from this perspective.",
+			"temperature": 0.7
+		},
+		{
+			"id": "agent-oop",
+			"model": {
+				"provider": "openai",
+				"model": "gpt-4o-mini"
+			},
+			"systemPrompt": "You are an advocate for object-oriented programming paradigms. Argue from this perspective.",
+			"temperature": 0.7
+		},
+		{
+			"id": "agent-pragmatic",
+			"model": {
+				"provider": "openai",
+				"model": "gpt-4o-mini"
+			},
+			"systemPrompt": "You are a pragmatic software architect who believes in using the right tool for the job. Consider hybrid approaches.",
+			"temperature": 0.7
+		}
+	],
+	"judges": [
+		{
+			"id": "judge-1",
+			"model": {
+				"provider": "openai",
+				"model": "gpt-4o"
+			},
+			"systemPrompt": "You are a senior software architect with 20 years of experience in both paradigms.",
+			"temperature": 0.3
+		},
+		{
+			"id": "judge-2",
+			"model": {
+				"provider": "openai",
+				"model": "gpt-4o"
+			},
+			"systemPrompt": "You are a computer science professor specializing in programming language theory.",
+			"temperature": 0.3
+		},
+		{
+			"id": "judge-3",
+			"model": {
+				"provider": "openai",
+				"model": "gpt-4o"
+			},
+			"systemPrompt": "You are a tech lead at a Fortune 500 company managing large distributed systems.",
+			"temperature": 0.3
+		}
+	],
+	"judgePanelEnabled": true,
+	"maxAgentRounds": 4,
+	"maxJudgeRounds": 3,
+	"consensusThreshold": 0.67,
+	"judgeConsensusThreshold": 0.6,
+	"judgeMinConfidence": 0.7,
+	"judgePositionsScope": "all_rounds",
+	"contextTopology": "last_round_with_self"
+}
