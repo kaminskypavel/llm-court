@@ -2,12 +2,18 @@
 
 import {
 	AlertCircle,
-	Coins,
+	Check,
+	Clock,
+	FastForward,
+	List,
 	Loader2,
-	MessageSquare,
 	Palette,
-	ScrollText,
-	Zap,
+	Pause,
+	Play,
+	Rewind,
+	SkipBack,
+	SkipForward,
+	Volume2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -21,22 +27,27 @@ import {
 	handleUrlLoad,
 	toLoadError,
 } from "@/lib/player/loader";
+import type { ValidatedDebateOutput } from "@/lib/player/schema";
 import { saveToRecent } from "@/lib/player/storage";
+import type { StepTiming } from "@/lib/player/types";
 import { AriaLiveAnnouncer } from "./AriaLiveAnnouncer";
-import { CollapsibleSidebar } from "./CollapsibleSidebar";
 import { COURTROOM_BG_COUNT } from "./CourtroomCanvas";
 import { DebateDropZone } from "./DebateDropZone";
 import { DynamicCourtroomCanvas } from "./DynamicCanvas";
 import { MobilePlayer } from "./MobilePlayer";
-import { PlaybackControls } from "./PlaybackControls";
 import { RecentDebates } from "./RecentDebates";
-import { SpeechBubble } from "./SpeechBubble";
-import { Timeline } from "./Timeline";
-import { TranscriptPanel } from "./TranscriptPanel";
 
 type DebatePlayerProps = {
 	initialUrl?: string;
 };
+
+// Format time as M:SS
+function formatTime(ms: number): string {
+	const totalSeconds = Math.floor(ms / 1000);
+	const minutes = Math.floor(totalSeconds / 60);
+	const seconds = totalSeconds % 60;
+	return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
 
 export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 	const {
@@ -117,7 +128,6 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 	// Keyboard shortcuts
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
-			// Skip if user is typing in an input
 			if (
 				e.target instanceof HTMLInputElement ||
 				e.target instanceof HTMLTextAreaElement
@@ -126,7 +136,7 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 			}
 
 			switch (e.key) {
-				case " ": // Space - play/pause
+				case " ":
 					e.preventDefault();
 					if (canPlay) {
 						isPlaying ? pause() : play();
@@ -210,7 +220,7 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 	// Empty state - show drop zone
 	if (state === "empty") {
 		return (
-			<div className="flex h-full flex-col gap-6 p-6">
+			<div className="mx-auto flex h-full max-w-3xl flex-col gap-6 p-6">
 				<div className="text-center">
 					<h1 className="font-bold text-2xl">Debate Player</h1>
 					<p className="text-muted-foreground">
@@ -253,8 +263,7 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 		);
 	}
 
-	// Ready/Playing/Paused state - show player
-	// Mobile: transcript-first layout
+	// Mobile layout
 	if (isMobile) {
 		return (
 			<>
@@ -287,7 +296,7 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 		);
 	}
 
-	// Desktop/Tablet: Full player layout
+	// Desktop layout - new design
 	return (
 		<>
 			<AriaLiveAnnouncer
@@ -295,20 +304,29 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 				isPlaying={isPlaying}
 				playbackSpeed={context.playbackSpeed}
 			/>
-			<div className="flex h-full flex-col">
-				{/* Header with key stats */}
-				<header className="flex items-start justify-between gap-4 border-b px-4 py-3">
-					<div className="min-w-0 flex-1">
-						<h1 className="truncate font-semibold text-lg">
+			<div className="flex h-full flex-col bg-background">
+				{/* Centered container */}
+				<div className="mx-auto flex h-full w-full max-w-[1400px] flex-col px-4">
+					{/* Header: Title + Badges */}
+					<header className="shrink-0 py-4">
+						<h1 className="font-bold text-2xl tracking-tight md:text-3xl">
 							{context.debate?.session.topic ?? "Debate Player"}
 						</h1>
-						<div className="mt-1 flex flex-wrap items-center gap-2">
+						<div className="mt-2 flex flex-wrap items-center gap-2">
 							{context.debate && (
 								<>
-									<Badge variant="outline" className="text-xs">
+									<Badge
+										variant="secondary"
+										className="gap-1.5 rounded-full px-3 py-1"
+									>
+										<Clock className="h-3.5 w-3.5" />
 										{context.debate.agentDebate.rounds.length} rounds
 									</Badge>
-									<Badge variant="outline" className="text-xs">
+									<Badge
+										variant="secondary"
+										className="gap-1.5 rounded-full px-3 py-1"
+									>
+										<List className="h-3.5 w-3.5" />
 										{context.steps.length} steps
 									</Badge>
 									<Badge
@@ -319,142 +337,267 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 													? "destructive"
 													: "secondary"
 										}
-										className="text-xs"
+										className="gap-1.5 rounded-full px-3 py-1"
 									>
+										<Check className="h-3.5 w-3.5" />
 										{context.debate.session.phase.replace(/_/g, " ")}
 									</Badge>
 								</>
 							)}
 						</div>
-					</div>
-					{/* Quick stats */}
-					{context.debate && (
-						<div className="flex shrink-0 items-center gap-3 text-muted-foreground text-xs">
-							<span className="flex items-center gap-1">
-								<Zap className="h-3 w-3" />
-								{context.debate.session.totalTokens.toLocaleString()}
-							</span>
-							<span className="flex items-center gap-1">
-								<Coins className="h-3 w-3" />$
-								{context.debate.session.totalCostUsd.toFixed(2)}
-							</span>
-						</div>
-					)}
-				</header>
+					</header>
 
-				{/* Main content area with collapsible sidebars */}
-				<div className="flex min-h-0 flex-1 overflow-hidden">
-					{/* Center: Canvas + Bottom sidebar */}
-					<div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-						{/* Canvas area - takes remaining space */}
-						<div className="relative min-h-[200px] flex-1 overflow-hidden">
-							<DynamicCourtroomCanvas
-								currentStep={currentStep}
-								debate={context.debate}
-								backgroundIndex={backgroundIndex}
-							/>
-							{/* Background switcher button */}
-							<button
-								type="button"
-								onClick={cycleBackground}
-								className="absolute top-2 right-2 flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-white text-xs transition-opacity hover:bg-black/70"
-								title={`Courtroom style ${backgroundIndex}/${COURTROOM_BG_COUNT} (click to change)`}
-							>
-								<Palette className="h-3 w-3" />
-								<span>
+					{/* Main content: Two columns */}
+					<div className="grid min-h-0 flex-1 gap-4 pb-4 lg:grid-cols-[1fr_400px]">
+						{/* Left column: Canvas + Current Speech */}
+						<div className="flex flex-col gap-4 overflow-hidden">
+							{/* Canvas */}
+							<div className="relative aspect-video overflow-hidden rounded-lg border bg-[#1a1208]">
+								<DynamicCourtroomCanvas
+									currentStep={currentStep}
+									debate={context.debate}
+									backgroundIndex={backgroundIndex}
+								/>
+								{/* Background switcher */}
+								<button
+									type="button"
+									onClick={cycleBackground}
+									className="absolute top-3 right-3 flex items-center gap-1.5 rounded-md bg-black/60 px-2.5 py-1.5 text-white text-xs backdrop-blur-sm transition-colors hover:bg-black/80"
+									title={`Courtroom style ${backgroundIndex}/${COURTROOM_BG_COUNT}`}
+								>
+									<Palette className="h-3.5 w-3.5" />
 									{backgroundIndex}/{COURTROOM_BG_COUNT}
-								</span>
-							</button>
-						</div>
-
-						{/* Bottom collapsible sidebar: Speech + Verdict */}
-						<CollapsibleSidebar
-							title="Current Speech"
-							icon={<MessageSquare className="h-4 w-4" />}
-							position="bottom"
-							height="h-56"
-							badge={
-								currentStep?.step.type === "AGENT_SPEAK"
-									? currentStep.step.agentId
-									: currentStep?.step.type === "JUDGE_EVALUATE"
-										? currentStep.step.judgeId
-										: undefined
-							}
-						>
-							<div className="flex h-full flex-col overflow-hidden p-3">
-								<div className="flex-1 overflow-auto">
-									<SpeechBubble
-										currentStep={currentStep}
-										isPlaying={isPlaying}
-									/>
-								</div>
-								{/* Final verdict banner (when reached) */}
-								{context.debate?.finalVerdict && (
-									<Card className="mt-2 shrink-0 border-primary/50 bg-primary/5 p-2">
-										<div className="flex items-start gap-2">
-											<Badge variant="default" className="shrink-0 text-xs">
-												{context.debate.finalVerdict.source.replace(/_/g, " ")}
-											</Badge>
-											<div className="min-w-0 flex-1">
-												<p className="line-clamp-1 text-xs">
-													{context.debate.finalVerdict.positionText}
-												</p>
-											</div>
-										</div>
-									</Card>
+								</button>
+								{/* Judge labels overlay */}
+								{context.debate && (
+									<div className="absolute top-3 left-1/2 flex -translate-x-1/2 gap-2">
+										{getUniqueJudges(context.debate).map((judge) => (
+											<span
+												key={judge}
+												className="rounded bg-black/60 px-2 py-1 font-mono text-white text-xs backdrop-blur-sm"
+											>
+												{judge}
+											</span>
+										))}
+									</div>
 								)}
 							</div>
-						</CollapsibleSidebar>
+
+							{/* Current Speech Panel */}
+							<Card className="shrink-0 p-4">
+								<div className="mb-3 flex items-center justify-between">
+									<h2 className="font-semibold text-lg">Current Speech</h2>
+									{context.debate?.finalVerdict && (
+										<Badge variant="default">Verdict</Badge>
+									)}
+								</div>
+								<div className="min-h-[80px] text-muted-foreground">
+									{currentStep ? (
+										<SpeechContent step={currentStep} />
+									) : (
+										<p className="italic">No speech selected</p>
+									)}
+								</div>
+							</Card>
+						</div>
+
+						{/* Right column: Transcript */}
+						<Card className="flex flex-col overflow-hidden">
+							<div className="shrink-0 border-b p-4">
+								<h2 className="font-semibold text-lg">Transcript</h2>
+							</div>
+							<div className="flex-1 overflow-y-auto">
+								<TranscriptList
+									steps={context.steps}
+									currentStepIndex={context.currentStepIndex}
+									onStepClick={(index) => {
+										const step = context.steps[index];
+										if (step) seek(step.startMs);
+									}}
+								/>
+							</div>
+						</Card>
 					</div>
 
-					{/* Right collapsible sidebar: Transcript */}
-					<CollapsibleSidebar
-						title="Transcript"
-						icon={<ScrollText className="h-4 w-4" />}
-						position="right"
-						width="w-80"
-						badge={context.steps.length}
-						className="hidden lg:flex"
-					>
-						<TranscriptPanel
-							steps={context.steps}
-							currentStepIndex={context.currentStepIndex}
-							onStepClick={(index) => {
-								const step = context.steps[index];
-								if (step) {
-									seek(step.startMs);
-								}
-							}}
-						/>
-					</CollapsibleSidebar>
-				</div>
+					{/* Bottom: Timeline + Controls */}
+					<div className="shrink-0 border-t py-4">
+						{/* Timeline */}
+						<div className="mb-4">
+							<input
+								type="range"
+								min={0}
+								max={context.totalDurationMs}
+								value={currentTimeMs}
+								onChange={(e) => seek(Number(e.target.value))}
+								className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+							/>
+						</div>
 
-				{/* Controls */}
-				<div className="border-t p-4">
-					<div className="space-y-4">
-						<Timeline
-							steps={context.steps}
-							currentStepIndex={context.currentStepIndex}
-							currentTimeMs={currentTimeMs}
-							totalDurationMs={context.totalDurationMs}
-							onSeek={seek}
-						/>
-						<PlaybackControls
-							isPlaying={isPlaying}
-							playbackSpeed={context.playbackSpeed}
-							disabled={!canPlay}
-							onPlay={play}
-							onPause={pause}
-							onStepForward={stepForward}
-							onStepBackward={stepBackward}
-							onJumpToStart={jumpToStart}
-							onJumpToEnd={jumpToEnd}
-							onSpeedChange={setSpeed}
-							onReset={reset}
-						/>
+						{/* Controls row */}
+						<div className="flex items-center justify-between">
+							{/* Time display */}
+							<div className="w-24 font-mono text-muted-foreground text-sm">
+								{formatTime(currentTimeMs)} /{" "}
+								{formatTime(context.totalDurationMs)}
+							</div>
+
+							{/* Playback controls */}
+							<div className="flex items-center gap-1">
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={jumpToStart}
+									disabled={!canPlay}
+									className="h-10 w-10"
+								>
+									<SkipBack className="h-5 w-5" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={stepBackward}
+									disabled={!canPlay}
+									className="h-10 w-10"
+								>
+									<Rewind className="h-5 w-5" />
+								</Button>
+								<Button
+									variant="default"
+									size="icon"
+									onClick={isPlaying ? pause : play}
+									disabled={!canPlay}
+									className="h-12 w-12 rounded-full"
+								>
+									{isPlaying ? (
+										<Pause className="h-6 w-6" />
+									) : (
+										<Play className="ml-0.5 h-6 w-6" />
+									)}
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={stepForward}
+									disabled={!canPlay}
+									className="h-10 w-10"
+								>
+									<FastForward className="h-5 w-5" />
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
+									onClick={jumpToEnd}
+									disabled={!canPlay}
+									className="h-10 w-10"
+								>
+									<SkipForward className="h-5 w-5" />
+								</Button>
+							</div>
+
+							{/* Speed controls */}
+							<div className="flex items-center gap-1">
+								{[0.5, 1, 1.5, 2].map((speed) => (
+									<Button
+										key={speed}
+										variant={
+											context.playbackSpeed === speed ? "default" : "ghost"
+										}
+										size="sm"
+										onClick={() => setSpeed(speed)}
+										className="h-8 w-12 font-mono text-xs"
+									>
+										{speed}x
+									</Button>
+								))}
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
 		</>
+	);
+}
+
+// Helper to get unique judges
+function getUniqueJudges(debate: ValidatedDebateOutput): string[] {
+	const judges = new Set<string>();
+	for (const round of debate.judgePanel.rounds) {
+		for (const evaluation of round.evaluations) {
+			judges.add(evaluation.judgeId);
+		}
+	}
+	return Array.from(judges);
+}
+
+// Speech content component
+function SpeechContent({ step }: { step: StepTiming }) {
+	if (step.step.type === "AGENT_SPEAK") {
+		return <p className="text-foreground leading-relaxed">{step.step.text}</p>;
+	}
+	if (step.step.type === "JUDGE_EVALUATE") {
+		return <p className="text-foreground leading-relaxed">{step.step.text}</p>;
+	}
+	return <p className="italic">System event</p>;
+}
+
+// Transcript list component
+function TranscriptList({
+	steps,
+	currentStepIndex,
+	onStepClick,
+}: {
+	steps: StepTiming[];
+	currentStepIndex: number;
+	onStepClick: (index: number) => void;
+}) {
+	return (
+		<div className="divide-y">
+			{steps.map((step, index) => {
+				const isActive = index === currentStepIndex;
+				const speaker =
+					step.step.type === "AGENT_SPEAK"
+						? step.step.agentId
+						: step.step.type === "JUDGE_EVALUATE"
+							? step.step.judgeId
+							: "System";
+				const confidence =
+					step.step.type === "JUDGE_EVALUATE" ? step.step.confidence : null;
+				const content =
+					step.step.type === "AGENT_SPEAK"
+						? step.step.text
+						: step.step.type === "JUDGE_EVALUATE"
+							? step.step.text
+							: "";
+
+				return (
+					<button
+						key={`${step.startMs}-${step.step.type}`}
+						type="button"
+						onClick={() => onStepClick(index)}
+						className={`w-full p-4 text-left transition-colors hover:bg-muted/50 ${
+							isActive ? "bg-muted" : ""
+						}`}
+					>
+						<div className="mb-1.5 flex items-center justify-between">
+							<div className="flex items-center gap-2">
+								<Volume2 className="h-4 w-4 text-muted-foreground" />
+								<span className="font-medium text-sm">{speaker}</span>
+								{confidence !== null && (
+									<Badge variant="secondary" className="text-xs">
+										{Math.round(confidence * 100)}%
+									</Badge>
+								)}
+							</div>
+							<span className="font-mono text-muted-foreground text-xs">
+								{formatTime(step.startMs)}
+							</span>
+						</div>
+						<p className="line-clamp-2 text-muted-foreground text-sm">
+							{content}
+						</p>
+					</button>
+				);
+			})}
+		</div>
 	);
 }
