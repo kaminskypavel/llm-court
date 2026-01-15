@@ -92,17 +92,23 @@ function extractJudges(debate: ValidatedDebateOutput | null) {
 const NATIVE_WIDTH = 320;
 const NATIVE_HEIGHT = 180;
 
-// Agent positions in native resolution
+// Minimum container size before initializing (prevents Playwright/headless issues)
+const MIN_WIDTH = 200;
+const MIN_HEIGHT = 100;
+
+// Agent positions in native resolution - positioned at bottom with padding
+const AGENT_Y = 170; // Near bottom (native height is 180, with 10px padding)
 const getAgentPositions = (count: number) => {
 	const positions: { x: number; y: number }[] = [];
-	const startX = 48;
-	const endX = 272;
+	const padding = 24; // Side padding
+	const startX = padding + 24;
+	const endX = NATIVE_WIDTH - padding - 24;
 	const spacing = count > 1 ? (endX - startX) / (count - 1) : 0;
 
 	for (let i = 0; i < count; i++) {
 		positions.push({
 			x: count === 1 ? 160 : startX + i * spacing,
-			y: 130,
+			y: AGENT_Y, // All lawyers on same Y position at bottom
 		});
 	}
 	return positions;
@@ -157,7 +163,13 @@ export function CourtroomCanvas({
 
 	// Initialize PixiJS with pixel-perfect settings
 	useEffect(() => {
-		if (!canvasRef.current || bounds.width === 0 || bounds.height === 0) return;
+		// Wait for container to have valid dimensions (prevents headless browser issues)
+		if (
+			!canvasRef.current ||
+			bounds.width < MIN_WIDTH ||
+			bounds.height < MIN_HEIGHT
+		)
+			return;
 
 		let mounted = true;
 
@@ -168,10 +180,10 @@ export function CourtroomCanvas({
 
 				if (!mounted || !canvasRef.current) return;
 
-				// Calculate scale to fit while maintaining aspect ratio
+				// Calculate scale to FIT the entire background in canvas (no cropping)
 				const scaleX = bounds.width / NATIVE_WIDTH;
 				const scaleY = bounds.height / NATIVE_HEIGHT;
-				const scale = Math.min(scaleX, scaleY);
+				const scale = Math.min(scaleX, scaleY); // Use min to show full background
 
 				// Application config for pixel-perfect rendering
 				const appConfig = {
@@ -204,10 +216,10 @@ export function CourtroomCanvas({
 
 				appRef.current = app as unknown as PixiApp;
 
-				// Create container for scaling
+				// Create container for scaling - center both horizontally and vertically
 				const container = new PIXI.Container();
 				container.scale.set(scale);
-				// Center the container
+				// Center the content in the canvas
 				container.x = (bounds.width - NATIVE_WIDTH * scale) / 2;
 				container.y = (bounds.height - NATIVE_HEIGHT * scale) / 2;
 				app.stage.addChild(container);

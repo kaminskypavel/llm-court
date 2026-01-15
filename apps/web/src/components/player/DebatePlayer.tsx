@@ -15,7 +15,7 @@ import {
 	SkipForward,
 	Volume2,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -281,6 +281,7 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 					isPlaying={isPlaying}
 					canPlay={canPlay}
 					playbackSpeed={context.playbackSpeed}
+					backgroundIndex={backgroundIndex}
 					onPlay={play}
 					onPause={pause}
 					onSeek={seek}
@@ -295,12 +296,7 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 		);
 	}
 
-	// Desktop layout - new design
-	const progressPercent =
-		context.totalDurationMs > 0
-			? (currentTimeMs / context.totalDurationMs) * 100
-			: 0;
-
+	// Desktop layout
 	return (
 		<>
 			<AriaLiveAnnouncer
@@ -350,10 +346,10 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 
 					{/* Main content: Two columns */}
 					<div className="grid min-h-0 flex-1 gap-5 pb-4 lg:grid-cols-[1fr_420px]">
-						{/* Left column: Canvas + Current Speech */}
-						<div className="flex flex-col gap-4 overflow-hidden">
+						{/* Left column: Canvas with speech overlay */}
+						<div className="flex flex-col overflow-hidden">
 							{/* Canvas */}
-							<div className="relative aspect-video overflow-hidden rounded-xl border-2 border-border/50 bg-[#1a1208] shadow-lg">
+							<div className="relative flex-1 overflow-hidden rounded-xl border-2 border-border/50 bg-[#1a1208] shadow-lg">
 								<DynamicCourtroomCanvas
 									currentStep={currentStep}
 									debate={context.debate}
@@ -383,27 +379,6 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 									</div>
 								)}
 							</div>
-
-							{/* Current Speech Panel */}
-							<div className="shrink-0 rounded-xl border-2 border-border/50 bg-card p-5 shadow-sm">
-								<div className="mb-4 flex items-center justify-between">
-									<h2 className="font-semibold text-xl">Current Speech</h2>
-									{context.debate?.finalVerdict && (
-										<span className="rounded-lg bg-primary px-3 py-1.5 font-medium text-primary-foreground text-sm">
-											Verdict
-										</span>
-									)}
-								</div>
-								<div className="min-h-[100px] text-base leading-relaxed">
-									{currentStep ? (
-										<SpeechContent step={currentStep} />
-									) : (
-										<p className="text-muted-foreground italic">
-											No speech selected
-										</p>
-									)}
-								</div>
-							</div>
 						</div>
 
 						{/* Right column: Transcript */}
@@ -426,31 +401,56 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 
 					{/* Bottom: Timeline + Controls */}
 					<div className="shrink-0 border-border/50 border-t py-5">
-						{/* Timeline with progress */}
-						<div className="relative mb-5">
-							<input
-								type="range"
-								min={0}
-								max={context.totalDurationMs || 100}
-								value={currentTimeMs}
-								onChange={(e) => seek(Number(e.target.value))}
-								className="relative z-10 h-2 w-full cursor-pointer appearance-none rounded-full bg-transparent [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-muted [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-md"
-								aria-label="Playback progress"
-							/>
-							<div
-								className="pointer-events-none absolute top-0 left-0 h-2 rounded-full bg-primary transition-all"
-								style={{ width: `${progressPercent}%` }}
-							/>
+						{/* Timeline with step markers */}
+						<div className="mb-5 flex items-center gap-4">
+							<span className="min-w-[50px] font-mono text-muted-foreground text-sm">
+								{formatTime(currentTimeMs)}
+							</span>
+							<div className="relative flex-1">
+								{/* Progress track background */}
+								<div className="absolute inset-0 flex items-center">
+									<div className="h-2 w-full rounded-full bg-muted" />
+								</div>
+								{/* Step markers - colored by speaker */}
+								<div className="pointer-events-none absolute inset-0 z-10 flex items-center">
+									{context.steps.map((step) => {
+										const pos =
+											context.totalDurationMs > 0
+												? (step.startMs / context.totalDurationMs) * 100
+												: 0;
+										const s = step.step;
+										if (s.type !== "AGENT_SPEAK" && s.type !== "JUDGE_EVALUATE")
+											return null;
+										const speaker =
+											s.type === "AGENT_SPEAK" ? s.agentId : s.judgeId;
+										const colorClass = getMarkerColor(speaker);
+										return (
+											<div
+												key={`marker-${step.startMs}-${s.type}`}
+												className={`absolute h-4 w-1 -translate-x-1/2 rounded-full ${colorClass}`}
+												style={{ left: `${pos}%` }}
+												title={`${speaker} - ${formatTime(step.startMs)}`}
+											/>
+										);
+									})}
+								</div>
+								<input
+									type="range"
+									min={0}
+									max={context.totalDurationMs || 100}
+									value={currentTimeMs}
+									onChange={(e) => seek(Number(e.target.value))}
+									className="relative z-20 h-2 w-full cursor-pointer appearance-none rounded-full bg-transparent [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-30 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-foreground [&::-webkit-slider-thumb]:shadow-md"
+									aria-label="Playback progress"
+								/>
+							</div>
+							<span className="min-w-[50px] text-right font-mono text-muted-foreground text-sm">
+								{formatTime(context.totalDurationMs)}
+							</span>
 						</div>
 
 						{/* Controls row */}
-						<div className="flex items-center justify-between">
-							{/* Time display */}
-							<div className="min-w-[100px] font-mono text-muted-foreground">
-								{formatTime(currentTimeMs)} /{" "}
-								{formatTime(context.totalDurationMs)}
-							</div>
-
+						<div className="flex items-center justify-center">
 							{/* Playback controls */}
 							<div className="flex items-center gap-2">
 								<button
@@ -535,18 +535,67 @@ function getUniqueJudges(debate: ValidatedDebateOutput): string[] {
 	return Array.from(judges);
 }
 
-// Speech content component
-function SpeechContent({ step }: { step: StepTiming }) {
-	if (step.step.type === "AGENT_SPEAK") {
-		return <p className="text-foreground leading-relaxed">{step.step.text}</p>;
-	}
-	if (step.step.type === "JUDGE_EVALUATE") {
-		return <p className="text-foreground leading-relaxed">{step.step.text}</p>;
-	}
-	return <p className="italic">System event</p>;
+// Color palette for speakers - distinct colors for easy identification
+const SPEAKER_COLORS: Record<string, string> = {
+	// Agents get warm/cool colors
+	"claude-advocate": "text-blue-400",
+	"gpt-skeptic": "text-red-400",
+	"gemini-pragmatist": "text-emerald-400",
+	"llama-contrarian": "text-amber-400",
+	// Judges get purple/pink tones
+	"judge-opus": "text-purple-400",
+	"judge-gpt4": "text-pink-400",
+	"judge-gemini": "text-violet-400",
+	// System events
+	System: "text-gray-400",
+};
+
+// Get text color for speaker, with fallback based on name hash
+function getSpeakerColor(speaker: string): string {
+	if (SPEAKER_COLORS[speaker]) return SPEAKER_COLORS[speaker];
+
+	// Generate consistent color from speaker name
+	const colors = [
+		"text-cyan-400",
+		"text-orange-400",
+		"text-lime-400",
+		"text-rose-400",
+		"text-teal-400",
+		"text-indigo-400",
+	];
+	let hash = 0;
+	for (const char of speaker) hash = (hash * 31 + char.charCodeAt(0)) % 1000;
+	return colors[hash % colors.length];
 }
 
-// Transcript list component
+// Marker colors (background versions)
+const MARKER_COLORS: Record<string, string> = {
+	"claude-advocate": "bg-blue-400",
+	"gpt-skeptic": "bg-red-400",
+	"gemini-pragmatist": "bg-emerald-400",
+	"llama-contrarian": "bg-amber-400",
+	"judge-opus": "bg-purple-400",
+	"judge-gpt4": "bg-pink-400",
+	"judge-gemini": "bg-violet-400",
+};
+
+// Get marker color for timeline
+function getMarkerColor(speaker: string): string {
+	if (MARKER_COLORS[speaker]) return MARKER_COLORS[speaker];
+
+	const colors = [
+		"bg-cyan-400",
+		"bg-orange-400",
+		"bg-lime-400",
+		"bg-rose-400",
+		"bg-teal-400",
+		"bg-indigo-400",
+	];
+	let hash = 0;
+	for (const char of speaker) hash = (hash * 31 + char.charCodeAt(0)) % 1000;
+	return colors[hash % colors.length];
+}
+
 function TranscriptList({
 	steps,
 	currentStepIndex,
@@ -556,6 +605,19 @@ function TranscriptList({
 	currentStepIndex: number;
 	onStepClick: (index: number) => void;
 }) {
+	const itemRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+
+	// Auto-scroll to current step
+	useEffect(() => {
+		const currentItem = itemRefs.current.get(currentStepIndex);
+		if (currentItem) {
+			currentItem.scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+			});
+		}
+	}, [currentStepIndex]);
+
 	return (
 		<div>
 			{steps.map((step, index) => {
@@ -566,28 +628,33 @@ function TranscriptList({
 						: step.step.type === "JUDGE_EVALUATE"
 							? step.step.judgeId
 							: "System";
-				const confidence =
-					step.step.type === "JUDGE_EVALUATE" ? step.step.confidence : null;
-				const content =
-					step.step.type === "AGENT_SPEAK"
-						? step.step.text
-						: step.step.type === "JUDGE_EVALUATE"
-							? step.step.text
-							: "";
+				const isAgent = step.step.type === "AGENT_SPEAK";
+				const isJudge = step.step.type === "JUDGE_EVALUATE";
+				const confidence = isJudge ? step.step.confidence : null;
+				const content = isAgent || isJudge ? step.step.text : "";
+				const speakerColor = getSpeakerColor(speaker);
 
 				return (
 					<button
 						key={`${step.startMs}-${step.step.type}`}
+						ref={(el) => {
+							if (el) itemRefs.current.set(index, el);
+							else itemRefs.current.delete(index);
+						}}
 						type="button"
 						onClick={() => onStepClick(index)}
 						className={`w-full border-border/50 border-b px-5 py-4 text-left transition-colors hover:bg-muted/50 ${
-							isActive ? "bg-muted/80" : ""
+							isActive ? "bg-primary/10 ring-2 ring-primary/30 ring-inset" : ""
 						}`}
 					>
 						<div className="mb-2 flex items-center justify-between">
 							<div className="flex items-center gap-3">
-								<Volume2 className="h-5 w-5 text-muted-foreground" />
-								<span className="font-semibold">{speaker}</span>
+								<Volume2
+									className={`h-5 w-5 ${isActive ? speakerColor : "text-muted-foreground"}`}
+								/>
+								<span className={`font-semibold ${speakerColor}`}>
+									{speaker}
+								</span>
 								{confidence !== null && (
 									<span className="rounded-md bg-muted px-2 py-0.5 font-medium text-muted-foreground text-sm">
 										{Math.round(confidence * 100)}%
@@ -598,7 +665,11 @@ function TranscriptList({
 								{formatTime(step.startMs)}
 							</span>
 						</div>
-						<p className="line-clamp-2 pl-8 text-muted-foreground">{content}</p>
+						{content && (
+							<p className="pl-8 text-foreground/80 leading-relaxed">
+								{content}
+							</p>
+						)}
 					</button>
 				);
 			})}

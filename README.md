@@ -1,42 +1,71 @@
-# my-better-t-app
+# LLM Court - AI Debate Simulator
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, and more.
+A courtroom-style debate simulator where multiple AI agents argue positions and judges evaluate arguments to reach consensus.
+
+![LLM Court Player](docs/images/player-desktop.png)
 
 ## Features
 
-- **TypeScript** - For type safety and improved developer experience
+- **Multi-Agent Debates** - Multiple AI models debate topics from different perspectives
+- **Judge Panel** - AI judges evaluate arguments and determine verdicts
+- **Pixel Art Courtroom** - Retro 8-bit style animated courtroom visualization
+- **Debate Playback** - Watch debates unfold with timeline controls and transcript
+- **Colored Timeline Markers** - Visual indicators showing when each speaker contributes
+- **Auto-scrolling Transcript** - Follow along as the debate progresses
+
+## Tech Stack
+
+- **TypeScript** - Type-safe codebase
 - **Next.js** - Full-stack React framework
-- **TailwindCSS** - Utility-first CSS for rapid UI development
+- **PixiJS** - Hardware-accelerated 2D rendering for courtroom animation
+- **XState** - State machine for playback control
+- **TailwindCSS** - Utility-first styling
 - **shadcn/ui** - Reusable UI components
-- **Turborepo** - Optimized monorepo build system
+- **Turborepo** - Monorepo build system
 
 ## Getting Started
 
-First, install the dependencies:
+Install dependencies:
 
 ```bash
 bun install
 ```
 
-Then, run the development server:
+Run the development server:
 
 ```bash
 bun run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
+Open [http://localhost:3000](http://localhost:3000) to view the debate player.
 
 ## Project Structure
 
 ```
-my-better-t-app/
+llm-court/
 ├── apps/
-│   ├── web/         # Frontend application (Next.js)
+│   └── web/              # Debate player web app
+│       └── src/
+│           ├── components/player/   # Player components
+│           ├── lib/player/          # Playback logic & types
+│           └── public/sprites/      # Pixel art assets
+├── packages/
+│   └── shared/           # Shared types and utilities
+└── docs/
+    └── images/           # Screenshots
 ```
 
 ## Available Scripts
 
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run check-types`: Check TypeScript types across all apps
+- `bun run dev` - Start development server
+- `bun run build` - Build for production
+- `bun run lint` - Run linter
+- `bun run lint:fix` - Fix lint issues
+
+## Screenshots
+
+### Desktop View
+![Desktop Player](docs/images/player-desktop.png)
+
+### Mobile View
+![Mobile Player](docs/images/player-mobile.png)
