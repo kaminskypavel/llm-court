@@ -173,19 +173,11 @@ export function CourtroomCanvas({
 				const scaleY = bounds.height / NATIVE_HEIGHT;
 				const scale = Math.min(scaleX, scaleY);
 
-				// Fix for GPU configurations that report 0 max if statements
-				if (
-					"BatchRenderer" in PIXI &&
-					(PIXI.BatchRenderer as { defaultMaxTextures?: number })
-						.defaultMaxTextures === undefined
-				) {
-					(
-						PIXI.BatchRenderer as { defaultMaxTextures?: number }
-					).defaultMaxTextures = 4;
-				}
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				const pixiAny = PIXI as any;
 
-				// PixiJS v7 with pixel-perfect settings
-				const app = new PIXI.Application({
+				// Application config for pixel-perfect rendering
+				const appConfig = {
 					view: canvasRef.current,
 					width: bounds.width,
 					height: bounds.height,
@@ -193,7 +185,28 @@ export function CourtroomCanvas({
 					antialias: false, // CRITICAL: No smoothing for pixel art
 					resolution: 1, // Don't use devicePixelRatio
 					autoDensity: false,
-				});
+				};
+
+				let app: InstanceType<typeof PIXI.Application>;
+				try {
+					app = new PIXI.Application(appConfig);
+				} catch (err) {
+					// If GPU reports 0 for MAX_TEXTURE_IMAGE_UNITS, fall back to WEBGL_LEGACY
+					if (
+						err instanceof Error &&
+						err.message.includes("checkMaxIfStatementsInShader")
+					) {
+						console.warn(
+							"GPU shader issue detected, falling back to WEBGL_LEGACY mode",
+						);
+						if (pixiAny.settings && pixiAny.ENV) {
+							pixiAny.settings.PREFER_ENV = pixiAny.ENV.WEBGL_LEGACY;
+						}
+						app = new PIXI.Application(appConfig);
+					} else {
+						throw err;
+					}
+				}
 
 				// Set default scale mode for all textures
 				PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
