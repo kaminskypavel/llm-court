@@ -1,29 +1,36 @@
-"use client";
+import { Suspense } from "react";
+import { DebatePlayer } from "@/components/player/DebatePlayer";
 
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
+// Default example debate URL - always preload for demo purposes
+const DEFAULT_DEBATE_URL = "/examples/local-cli-debate-output.json";
 
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
+export const metadata = {
+	title: "Debate Player | LLM Court",
+	description: "Watch and interact with LLM debate replays",
+};
 
-export default function Home() {
+type PageProps = {
+	searchParams: Promise<{ url?: string }>;
+};
+
+export default async function HomePage({ searchParams }: PageProps) {
+	const params = await searchParams;
+	const initialUrl = params.url ?? DEFAULT_DEBATE_URL;
+
 	return (
-		<div className="container mx-auto max-w-3xl px-4 py-2">
-			<pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
-			<div className="grid gap-6">
-				<section className="rounded-lg border p-4">
-					<h2 className="mb-2 font-medium">API Status</h2>
-				</section>
+		<main className="h-full overflow-hidden">
+			<Suspense fallback={<PlayerLoading />}>
+				<DebatePlayer initialUrl={initialUrl} />
+			</Suspense>
+		</main>
+	);
+}
+
+function PlayerLoading() {
+	return (
+		<div className="flex h-full items-center justify-center">
+			<div className="animate-pulse text-muted-foreground">
+				Loading player...
 			</div>
 		</div>
 	);
