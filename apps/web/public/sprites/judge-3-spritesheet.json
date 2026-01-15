@@ -1,0 +1,42 @@
+{
+	"frames": {
+		"judge_idle_0": {
+			"frame": { "x": 0, "y": 0, "w": 256, "h": 512 }
+		},
+		"judge_idle_1": {
+			"frame": { "x": 256, "y": 0, "w": 256, "h": 512 }
+		},
+		"judge_idle_2": {
+			"frame": { "x": 512, "y": 0, "w": 256, "h": 512 }
+		},
+		"judge_idle_3": {
+			"frame": { "x": 768, "y": 0, "w": 256, "h": 512 }
+		},
+		"judge_speak_0": {
+			"frame": { "x": 0, "y": 512, "w": 256, "h": 512 }
+		},
+		"judge_speak_1": {
+			"frame": { "x": 256, "y": 512, "w": 256, "h": 512 }
+		},
+		"judge_speak_2": {
+			"frame": { "x": 512, "y": 512, "w": 256, "h": 512 }
+		},
+		"judge_speak_3": {
+			"frame": { "x": 768, "y": 512, "w": 256, "h": 512 }
+		}
+	},
+	"meta": {
+		"image": "judge-3-spritesheet.png",
+		"size": { "w": 1024, "h": 1024 },
+		"scale": 1
+	},
+	"animations": {
+		"idle": ["judge_idle_0", "judge_idle_1", "judge_idle_2", "judge_idle_3"],
+		"speak": [
+			"judge_speak_0",
+			"judge_speak_1",
+			"judge_speak_2",
+			"judge_speak_3"
+		]
+	}
+}

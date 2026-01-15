@@ -39,8 +39,9 @@ type CourtroomCanvasProps = {
 	debate: ValidatedDebateOutput | null;
 };
 
-// Number of different agent sprite variants
+// Number of different sprite variants
 const AGENT_SPRITE_COUNT = 8;
+const JUDGE_SPRITE_COUNT = 4;
 
 // Sprite info per agent (which spritesheet and its animations)
 type AgentSpriteData = {
@@ -127,10 +128,6 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 	const spritesRef = useRef<Map<string, AnimatedSpriteRef>>(new Map());
 	// Store which sprite data each agent/judge uses
 	const spriteDataRef = useRef<Map<string, AgentSpriteData>>(new Map());
-	const judgeSheetRef = useRef<{
-		idle: unknown[];
-		speak: unknown[];
-	} | null>(null);
 	const [isLoaded, setIsLoaded] = useState(false);
 	const [speakingId, setSpeakingId] = useState<string | null>(null);
 
@@ -199,7 +196,7 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 				const bg = new PIXI.Sprite(bgTexture);
 				container.addChild(bg);
 
-				// Load all agent sprite sheets (4 variants) and judge sprite sheet
+				// Load all agent and judge sprite sheets
 				const agentSheetPromises = Array.from(
 					{ length: AGENT_SPRITE_COUNT },
 					(_, i) =>
@@ -207,13 +204,17 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 							r.json(),
 						),
 				);
-				const judgeSheetPromise = fetch("/sprites/judge-spritesheet.json").then(
-					(r) => r.json(),
+				const judgeSheetPromises = Array.from(
+					{ length: JUDGE_SPRITE_COUNT },
+					(_, i) =>
+						fetch(`/sprites/judge-${i + 1}-spritesheet.json`).then((r) =>
+							r.json(),
+						),
 				);
 
-				const [judgeSheet, ...agentSheets] = await Promise.all([
-					judgeSheetPromise,
-					...agentSheetPromises,
+				const [agentSheets, judgeSheets] = await Promise.all([
+					Promise.all(agentSheetPromises),
+					Promise.all(judgeSheetPromises),
 				]);
 
 				// Load textures
@@ -221,18 +222,21 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 					{ length: AGENT_SPRITE_COUNT },
 					(_, i) => PIXI.Assets.load(`/sprites/agent-${i + 1}-spritesheet.png`),
 				);
-				const judgeTexturePromise = PIXI.Assets.load(
-					"/sprites/judge-spritesheet.png",
+				const judgeTexturePromises = Array.from(
+					{ length: JUDGE_SPRITE_COUNT },
+					(_, i) => PIXI.Assets.load(`/sprites/judge-${i + 1}-spritesheet.png`),
 				);
 
-				const [judgeTexture, ...agentTextures] = await Promise.all([
-					judgeTexturePromise,
-					...agentTexturePromises,
+				const [agentTextures, judgeTextures] = await Promise.all([
+					Promise.all(agentTexturePromises),
+					Promise.all(judgeTexturePromises),
 				]);
 
 				// Set NEAREST scaling for all textures
-				judgeTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
 				for (const tex of agentTextures) {
+					tex.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+				}
+				for (const tex of judgeTextures) {
 					tex.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
 				}
 
@@ -245,14 +249,13 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 					}),
 				);
 
-				const judgeSpritesheet = new PIXI.Spritesheet(judgeTexture, judgeSheet);
-				await judgeSpritesheet.parse();
-
-				// Store judge animation textures
-				judgeSheetRef.current = {
-					idle: judgeSpritesheet.animations.idle,
-					speak: judgeSpritesheet.animations.speak,
-				};
+				const judgeSpritesheets = await Promise.all(
+					judgeTextures.map(async (tex, i) => {
+						const sheet = new PIXI.Spritesheet(tex, judgeSheets[i]);
+						await sheet.parse();
+						return sheet;
+					}),
+				);
 
 				// Add agents and judges if debate is loaded
 				if (debate) {
@@ -309,19 +312,32 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 					// Scale for judges (slightly smaller)
 					const judgeScale = 45 / 512;
 
+					// Shuffle judge sprite indices
+					const judgeSpriteIndices = judges.map(
+						(_, i) => i % JUDGE_SPRITE_COUNT,
+					);
+					// Use different seed offset for judges
+					for (let i = judgeSpriteIndices.length - 1; i > 0; i--) {
+						const j = (seed + 3 + i * 11) % (i + 1);
+						[judgeSpriteIndices[i], judgeSpriteIndices[j]] = [
+							judgeSpriteIndices[j],
+							judgeSpriteIndices[i],
+						];
+					}
+
 					for (const [i, judge] of judges.entries()) {
 						const pos = judgePositions[i];
+						const sheetIndex = judgeSpriteIndices[i];
+						const sheet = judgeSpritesheets[sheetIndex];
 
 						// Store sprite data for this judge
 						spriteDataRef.current.set(judge.judgeId, {
-							idle: judgeSpritesheet.animations.idle,
-							speak: judgeSpritesheet.animations.speak,
+							idle: sheet.animations.idle,
+							speak: sheet.animations.speak,
 						});
 
 						// Create animated sprite for judge
-						const sprite = new PIXI.AnimatedSprite(
-							judgeSpritesheet.animations.idle,
-						);
+						const sprite = new PIXI.AnimatedSprite(sheet.animations.idle);
 						sprite.anchor.set(0.5, 1);
 						sprite.scale.set(judgeScale);
 						sprite.x = pos.x;
@@ -350,7 +366,6 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 			mounted = false;
 			spritesRef.current.clear();
 			spriteDataRef.current.clear();
-			judgeSheetRef.current = null;
 			if (appRef.current) {
 				appRef.current.destroy(true);
 				appRef.current = null;
