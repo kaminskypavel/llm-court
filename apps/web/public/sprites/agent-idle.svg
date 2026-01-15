@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 120">
+  <!-- Body -->
+  <rect x="15" y="45" width="50" height="60" rx="5" fill="#4a5568"/>
+
+  <!-- Head -->
+  <circle cx="40" cy="25" r="20" fill="#ed8936"/>
+
+  <!-- Eyes -->
+  <circle cx="33" cy="22" r="3" fill="#1a202c"/>
+  <circle cx="47" cy="22" r="3" fill="#1a202c"/>
+
+  <!-- Mouth (neutral) -->
+  <line x1="35" y1="32" x2="45" y2="32" stroke="#1a202c" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Arms -->
+  <rect x="5" y="50" width="12" height="35" rx="5" fill="#4a5568"/>
+  <rect x="63" y="50" width="12" height="35" rx="5" fill="#4a5568"/>
+
+  <!-- Tie/accent -->
+  <polygon points="40,45 35,55 40,105 45,55" fill="#3182ce"/>
+</svg>

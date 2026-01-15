@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 120">
+  <!-- Glow effect -->
+  <defs>
+    <filter id="judgeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Robe body with glow -->
+  <rect x="12" y="45" width="56" height="65" rx="5" fill="#1a202c" filter="url(#judgeGlow)"/>
+
+  <!-- Collar -->
+  <polygon points="20,45 40,60 60,45" fill="#e2e8f0"/>
+
+  <!-- Head -->
+  <circle cx="40" cy="25" r="20" fill="#9f7aea"/>
+
+  <!-- Eyes (alert) -->
+  <circle cx="33" cy="22" r="4" fill="#1a202c"/>
+  <circle cx="47" cy="22" r="4" fill="#1a202c"/>
+  <circle cx="34" cy="21" r="1" fill="white"/>
+  <circle cx="48" cy="21" r="1" fill="white"/>
+
+  <!-- Mouth (open, speaking) -->
+  <ellipse cx="40" cy="33" rx="5" ry="3" fill="#1a202c"/>
+
+  <!-- Wig/hair placeholder -->
+  <path d="M 20 20 Q 15 10 25 5 Q 40 0 55 5 Q 65 10 60 20" fill="#e2e8f0" opacity="0.8"/>
+
+  <!-- Gavel raised -->
+  <rect x="62" y="55" width="8" height="25" rx="2" fill="#8b5a2b" transform="rotate(-10 66 67)"/>
+  <rect x="59" y="50" width="14" height="8" rx="2" fill="#a0522d" transform="rotate(-10 66 54)"/>
+
+  <!-- Speaking indicator -->
+  <circle cx="65" cy="15" r="5" fill="#f6ad55">
+    <animate attributeName="opacity" values="1;0.5;1" dur="0.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>

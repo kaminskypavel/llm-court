@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 120">
+  <!-- Robe body -->
+  <rect x="12" y="45" width="56" height="65" rx="5" fill="#1a202c"/>
+
+  <!-- Collar -->
+  <polygon points="20,45 40,60 60,45" fill="#e2e8f0"/>
+
+  <!-- Head -->
+  <circle cx="40" cy="25" r="20" fill="#9f7aea"/>
+
+  <!-- Eyes -->
+  <circle cx="33" cy="22" r="3" fill="#1a202c"/>
+  <circle cx="47" cy="22" r="3" fill="#1a202c"/>
+
+  <!-- Mouth (serious) -->
+  <line x1="35" y1="33" x2="45" y2="33" stroke="#1a202c" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Wig/hair placeholder -->
+  <path d="M 20 20 Q 15 10 25 5 Q 40 0 55 5 Q 65 10 60 20" fill="#e2e8f0" opacity="0.8"/>
+
+  <!-- Gavel in hand -->
+  <rect x="60" y="70" width="8" height="25" rx="2" fill="#8b5a2b" transform="rotate(20 64 82)"/>
+  <rect x="57" y="68" width="14" height="8" rx="2" fill="#a0522d" transform="rotate(20 64 72)"/>
+</svg>

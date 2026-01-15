@@ -1,0 +1,38 @@
+{
+	"topic": "Should AI systems be required to explain their reasoning to users?",
+	"initialQuery": "Consider transparency, user trust, technical feasibility, and potential impact on AI capabilities.",
+	"agents": [
+		{
+			"id": "claude-advocate",
+			"model": {
+				"provider": "anthropic",
+				"model": "claude-sonnet-4-20250514"
+			},
+			"systemPrompt": "You are a thoughtful debate participant who argues for positions you believe are well-supported by evidence. Be concise but thorough.",
+			"temperature": 0.7
+		},
+		{
+			"id": "claude-skeptic",
+			"model": {
+				"provider": "anthropic",
+				"model": "claude-sonnet-4-20250514"
+			},
+			"systemPrompt": "You are a critical thinker who challenges assumptions and looks for weaknesses in arguments. Be fair but rigorous.",
+			"temperature": 0.7
+		},
+		{
+			"id": "claude-pragmatist",
+			"model": {
+				"provider": "anthropic",
+				"model": "claude-sonnet-4-20250514"
+			},
+			"systemPrompt": "You focus on practical implications and real-world tradeoffs. Balance idealism with pragmatic concerns.",
+			"temperature": 0.7
+		}
+	],
+	"judges": [],
+	"judgePanelEnabled": false,
+	"maxAgentRounds": 3,
+	"consensusThreshold": 0.67,
+	"contextTopology": "last_round_with_self"
+}

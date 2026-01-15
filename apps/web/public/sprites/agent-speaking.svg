@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 120">
+  <!-- Glow effect -->
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Body with glow -->
+  <rect x="15" y="45" width="50" height="60" rx="5" fill="#4a5568" filter="url(#glow)"/>
+
+  <!-- Head -->
+  <circle cx="40" cy="25" r="20" fill="#ed8936"/>
+
+  <!-- Eyes (alert) -->
+  <circle cx="33" cy="22" r="4" fill="#1a202c"/>
+  <circle cx="47" cy="22" r="4" fill="#1a202c"/>
+  <circle cx="34" cy="21" r="1" fill="white"/>
+  <circle cx="48" cy="21" r="1" fill="white"/>
+
+  <!-- Mouth (open, speaking) -->
+  <ellipse cx="40" cy="33" rx="6" ry="4" fill="#1a202c"/>
+
+  <!-- Arms (raised slightly) -->
+  <rect x="2" y="45" width="12" height="35" rx="5" fill="#4a5568" transform="rotate(-10 8 62)"/>
+  <rect x="66" y="45" width="12" height="35" rx="5" fill="#4a5568" transform="rotate(10 72 62)"/>
+
+  <!-- Tie/accent -->
+  <polygon points="40,45 35,55 40,105 45,55" fill="#3182ce"/>
+
+  <!-- Speaking indicator -->
+  <circle cx="65" cy="15" r="5" fill="#48bb78">
+    <animate attributeName="opacity" values="1;0.5;1" dur="0.5s" repeatCount="indefinite"/>
+  </circle>
+</svg>

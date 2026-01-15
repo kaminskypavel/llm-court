@@ -1,0 +1,33 @@
+{
+	"bundles": [
+		{
+			"name": "courtroom",
+			"assets": [
+				{
+					"alias": "courtroom-bg",
+					"src": "/sprites/courtroom-bg.svg"
+				},
+				{
+					"alias": "agent-idle",
+					"src": "/sprites/agent-idle.svg"
+				},
+				{
+					"alias": "agent-speaking",
+					"src": "/sprites/agent-speaking.svg"
+				},
+				{
+					"alias": "judge-idle",
+					"src": "/sprites/judge-idle.svg"
+				},
+				{
+					"alias": "judge-speaking",
+					"src": "/sprites/judge-speaking.svg"
+				},
+				{
+					"alias": "podium",
+					"src": "/sprites/podium.svg"
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,259 @@
+{
+	"version": "2.3.0",
+	"session": {
+		"id": "019bbfff-e5e1-738d-8f95-b0cab392e737",
+		"topic": "Is functional programming better than object-oriented programming for large-scale applications?",
+		"initialQuery": "Consider maintainability, scalability, team collaboration, and real-world adoption.",
+		"phase": "deadlock",
+		"startedAt": "2026-01-15T04:52:57.441Z",
+		"completedAt": "2026-01-15T04:55:03.013Z",
+		"totalTokens": 0,
+		"totalCostUsd": 0,
+		"pricingKnown": false,
+		"engineVersion": "2.3.0",
+		"totalRetries": 0,
+		"totalErrors": 9
+	},
+	"agentDebate": {
+		"rounds": [
+			{
+				"roundNumber": 1,
+				"candidatePositionId": null,
+				"candidatePositionText": null,
+				"responses": [
+					{
+						"agentId": "codex-advocate",
+						"round": 1,
+						"positionId": null,
+						"positionText": "",
+						"reasoning": "",
+						"vote": "abstain",
+						"confidence": 0,
+						"tokenUsage": {
+							"prompt": 0,
+							"completion": 0,
+							"total": 0,
+							"estimated": true
+						},
+						"latencyMs": 15621,
+						"status": "error",
+						"error": "Codex CLI exited with code 1"
+					},
+					{
+						"agentId": "gemini-advocate",
+						"round": 1,
+						"positionId": null,
+						"positionText": "",
+						"reasoning": "",
+						"vote": "abstain",
+						"confidence": 0,
+						"tokenUsage": {
+							"prompt": 0,
+							"completion": 0,
+							"total": 0,
+							"estimated": true
+						},
+						"latencyMs": 0,
+						"status": "error",
+						"error": "Failed to parse JSON: JSON Parse error: Expected '}'"
+					},
+					{
+						"agentId": "codex-pragmatic",
+						"round": 1,
+						"positionId": null,
+						"positionText": "",
+						"reasoning": "",
+						"vote": "abstain",
+						"confidence": 0,
+						"tokenUsage": {
+							"prompt": 0,
+							"completion": 0,
+							"total": 0,
+							"estimated": true
+						},
+						"latencyMs": 17178,
+						"status": "error",
+						"error": "Codex CLI exited with code 1"
+					}
+				],
+				"consensusReached": false,
+				"consensusPositionId": null,
+				"consensusPositionText": null,
+				"voteTally": {
+					"yes": 0,
+					"no": 0,
+					"abstain": 0,
+					"total": 3,
+					"eligible": 0,
+					"votingTotal": 0,
+					"supermajorityThreshold": 0,
+					"supermajorityReached": false
+				},
+				"timestamp": "2026-01-15T04:53:25.367Z"
+			},
+			{
+				"roundNumber": 2,
+				"candidatePositionId": null,
+				"candidatePositionText": null,
+				"responses": [
+					{
+						"agentId": "codex-advocate",
+						"round": 2,
+						"positionId": null,
+						"positionText": "",
+						"reasoning": "",
+						"vote": "abstain",
+						"confidence": 0,
+						"tokenUsage": {
+							"prompt": 0,
+							"completion": 0,
+							"total": 0,
+							"estimated": true
+						},
+						"latencyMs": 8771,
+						"status": "error",
+						"error": "Codex CLI exited with code 1"
+					},
+					{
+						"agentId": "gemini-advocate",
+						"round": 2,
+						"positionId": null,
+						"positionText": "",
+						"reasoning": "",
+						"vote": "abstain",
+						"confidence": 0,
+						"tokenUsage": {
+							"prompt": 0,
+							"completion": 0,
+							"total": 0,
+							"estimated": true
+						},
+						"latencyMs": 0,
+						"status": "error",
+						"error": "Failed to parse JSON: JSON Parse error: Expected '}'"
+					},
+					{
+						"agentId": "codex-pragmatic",
+						"round": 2,
+						"positionId": null,
+						"positionText": "",
+						"reasoning": "",
+						"vote": "abstain",
+						"confidence": 0,
+						"tokenUsage": {
+							"prompt": 0,
+							"completion": 0,
+							"total": 0,
+							"estimated": true
+						},
+						"latencyMs": 14102,
+						"status": "error",
+						"error": "Codex CLI exited with code 1"
+					}
+				],
+				"consensusReached": false,
+				"consensusPositionId": null,
+				"consensusPositionText": null,
+				"voteTally": {
+					"yes": 0,
+					"no": 0,
+					"abstain": 0,
+					"total": 3,
+					"eligible": 0,
+					"votingTotal": 0,
+					"supermajorityThreshold": 0,
+					"supermajorityReached": false
+				},
+				"timestamp": "2026-01-15T04:54:10.925Z"
+			},
+			{
+				"roundNumber": 3,
+				"candidatePositionId": null,
+				"candidatePositionText": null,
+				"responses": [
+					{
+						"agentId": "codex-advocate",
+						"round": 3,
+						"positionId": null,
+						"positionText": "",
+						"reasoning": "",
+						"vote": "abstain",
+						"confidence": 0,
+						"tokenUsage": {
+							"prompt": 0,
+							"completion": 0,
+							"total": 0,
+							"estimated": true
+						},
+						"latencyMs": 10015,
+						"status": "error",
+						"error": "Codex CLI exited with code 1"
+					},
+					{
+						"agentId": "gemini-advocate",
+						"round": 3,
+						"positionId": null,
+						"positionText": "",
+						"reasoning": "",
+						"vote": "abstain",
+						"confidence": 0,
+						"tokenUsage": {
+							"prompt": 0,
+							"completion": 0,
+							"total": 0,
+							"estimated": true
+						},
+						"latencyMs": 0,
+						"status": "error",
+						"error": "Failed to parse JSON: JSON Parse error: Expected '}'"
+					},
+					{
+						"agentId": "codex-pragmatic",
+						"round": 3,
+						"positionId": null,
+						"positionText": "",
+						"reasoning": "",
+						"vote": "abstain",
+						"confidence": 0,
+						"tokenUsage": {
+							"prompt": 0,
+							"completion": 0,
+							"total": 0,
+							"estimated": true
+						},
+						"latencyMs": 9921,
+						"status": "error",
+						"error": "Codex CLI exited with code 1"
+					}
+				],
+				"consensusReached": false,
+				"consensusPositionId": null,
+				"consensusPositionText": null,
+				"voteTally": {
+					"yes": 0,
+					"no": 0,
+					"abstain": 0,
+					"total": 3,
+					"eligible": 0,
+					"votingTotal": 0,
+					"supermajorityThreshold": 0,
+					"supermajorityReached": false
+				},
+				"timestamp": "2026-01-15T04:55:03.013Z"
+			}
+		],
+		"finalPositionId": null,
+		"finalPositionText": null
+	},
+	"judgePanel": {
+		"enabled": false,
+		"rounds": [],
+		"final": null
+	},
+	"finalVerdict": {
+		"positionId": "",
+		"positionText": "",
+		"confidence": 0,
+		"source": "deadlock"
+	}
+}
