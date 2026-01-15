@@ -173,9 +173,6 @@ export function CourtroomCanvas({
 				const scaleY = bounds.height / NATIVE_HEIGHT;
 				const scale = Math.min(scaleX, scaleY);
 
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const pixiAny = PIXI as any;
-
 				// Application config for pixel-perfect rendering
 				const appConfig = {
 					view: canvasRef.current,
@@ -191,21 +188,15 @@ export function CourtroomCanvas({
 				try {
 					app = new PIXI.Application(appConfig);
 				} catch (err) {
-					// If GPU reports 0 for MAX_TEXTURE_IMAGE_UNITS, fall back to WEBGL_LEGACY
-					if (
-						err instanceof Error &&
-						err.message.includes("checkMaxIfStatementsInShader")
-					) {
-						console.warn(
-							"GPU shader issue detected, falling back to WEBGL_LEGACY mode",
-						);
-						if (pixiAny.settings && pixiAny.ENV) {
-							pixiAny.settings.PREFER_ENV = pixiAny.ENV.WEBGL_LEGACY;
-						}
-						app = new PIXI.Application(appConfig);
-					} else {
-						throw err;
-					}
+					// WebGL failed - try Canvas2D fallback
+					console.warn(
+						"WebGL initialization failed, falling back to Canvas2D renderer:",
+						err instanceof Error ? err.message : err,
+					);
+					app = new PIXI.Application({
+						...appConfig,
+						forceCanvas: true,
+					});
 				}
 
 				// Set default scale mode for all textures
