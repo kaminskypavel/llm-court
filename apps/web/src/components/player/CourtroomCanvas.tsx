@@ -31,6 +31,7 @@ type AnimatedSpriteRef = {
 	textures: unknown[];
 	play: () => void;
 	gotoAndPlay: (frame: number) => void;
+	gotoAndStop: (frame: number) => void;
 	filters: unknown[];
 };
 
@@ -171,6 +172,17 @@ export function CourtroomCanvas({
 				const scaleX = bounds.width / NATIVE_WIDTH;
 				const scaleY = bounds.height / NATIVE_HEIGHT;
 				const scale = Math.min(scaleX, scaleY);
+
+				// Fix for GPU configurations that report 0 max if statements
+				if (
+					"BatchRenderer" in PIXI &&
+					(PIXI.BatchRenderer as { defaultMaxTextures?: number })
+						.defaultMaxTextures === undefined
+				) {
+					(
+						PIXI.BatchRenderer as { defaultMaxTextures?: number }
+					).defaultMaxTextures = 4;
+				}
 
 				// PixiJS v7 with pixel-perfect settings
 				const app = new PIXI.Application({
