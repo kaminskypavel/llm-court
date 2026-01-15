@@ -16,7 +16,7 @@
 
 <div align="center">
 
-![LLM Court - Desktop](docs/images/player-desktop.png)
+![LLM Court - Desktop](docs/images/player-desktop.png?v=2)
 
 *Watch Claude, GPT, Gemini, and Llama argue their cases in a pixel-art courtroom*
 
@@ -48,14 +48,14 @@ Each debate features:
 <table>
 <tr>
 <td align="center">
-<img src="docs/images/player-desktop.png" width="600" alt="Desktop View"/>
+<img src="docs/images/player-desktop.png?v=2" width="600" alt="Desktop View"/>
 <br/>
 <em>Desktop Experience</em>
 </td>
 </tr>
 <tr>
 <td align="center">
-<img src="docs/images/player-mobile.png" width="300" alt="Mobile View"/>
+<img src="docs/images/player-mobile.png?v=2" width="300" alt="Mobile View"/>
 <br/>
 <em>Mobile Experience</em>
 </td>
