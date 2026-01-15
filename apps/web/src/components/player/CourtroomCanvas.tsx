@@ -39,15 +39,14 @@ type CourtroomCanvasProps = {
 	debate: ValidatedDebateOutput | null;
 };
 
-// Agent color tints (different colors for each agent)
-const AGENT_TINTS = [
-	0x4a7cc9, // Blue
-	0xc94a4a, // Red
-	0x4ac97c, // Green
-	0x9b4ac9, // Purple
-	0xc9984a, // Orange
-	0x4ac9c9, // Cyan
-];
+// Number of different agent sprite variants
+const AGENT_SPRITE_COUNT = 4;
+
+// Sprite info per agent (which spritesheet and its animations)
+type AgentSpriteData = {
+	idle: unknown[];
+	speak: unknown[];
+};
 
 // Extract unique agents from debate rounds
 function extractAgents(debate: ValidatedDebateOutput | null) {
@@ -126,11 +125,11 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const appRef = useRef<PixiApp | null>(null);
 	const spritesRef = useRef<Map<string, AnimatedSpriteRef>>(new Map());
-	const sheetDataRef = useRef<{
-		agentIdle: unknown[];
-		agentSpeak: unknown[];
-		judgeIdle: unknown[];
-		judgeSpeak: unknown[];
+	// Store which sprite data each agent/judge uses
+	const spriteDataRef = useRef<Map<string, AgentSpriteData>>(new Map());
+	const judgeSheetRef = useRef<{
+		idle: unknown[];
+		speak: unknown[];
 	} | null>(null);
 	const [isLoaded, setIsLoaded] = useState(false);
 	const [speakingId, setSpeakingId] = useState<string | null>(null);
@@ -200,33 +199,59 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 				const bg = new PIXI.Sprite(bgTexture);
 				container.addChild(bg);
 
-				// Load sprite sheets
-				const [agentSheet, judgeSheet] = await Promise.all([
-					fetch("/sprites/agent-spritesheet.json").then((r) => r.json()),
-					fetch("/sprites/judge-spritesheet.json").then((r) => r.json()),
+				// Load all agent sprite sheets (4 variants) and judge sprite sheet
+				const agentSheetPromises = Array.from(
+					{ length: AGENT_SPRITE_COUNT },
+					(_, i) =>
+						fetch(`/sprites/agent-${i + 1}-spritesheet.json`).then((r) =>
+							r.json(),
+						),
+				);
+				const judgeSheetPromise = fetch("/sprites/judge-spritesheet.json").then(
+					(r) => r.json(),
+				);
+
+				const [judgeSheet, ...agentSheets] = await Promise.all([
+					judgeSheetPromise,
+					...agentSheetPromises,
 				]);
 
-				const [agentTexture, judgeTexture] = await Promise.all([
-					PIXI.Assets.load("/sprites/agent-spritesheet.png"),
-					PIXI.Assets.load("/sprites/judge-spritesheet.png"),
+				// Load textures
+				const agentTexturePromises = Array.from(
+					{ length: AGENT_SPRITE_COUNT },
+					(_, i) => PIXI.Assets.load(`/sprites/agent-${i + 1}-spritesheet.png`),
+				);
+				const judgeTexturePromise = PIXI.Assets.load(
+					"/sprites/judge-spritesheet.png",
+				);
+
+				const [judgeTexture, ...agentTextures] = await Promise.all([
+					judgeTexturePromise,
+					...agentTexturePromises,
 				]);
 
-				// Set NEAREST scaling
-				agentTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+				// Set NEAREST scaling for all textures
 				judgeTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+				for (const tex of agentTextures) {
+					tex.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+				}
 
-				// Create sprite sheet objects
-				const agentSpritesheet = new PIXI.Spritesheet(agentTexture, agentSheet);
+				// Create and parse all spritesheets
+				const agentSpritesheets = await Promise.all(
+					agentTextures.map(async (tex, i) => {
+						const sheet = new PIXI.Spritesheet(tex, agentSheets[i]);
+						await sheet.parse();
+						return sheet;
+					}),
+				);
+
 				const judgeSpritesheet = new PIXI.Spritesheet(judgeTexture, judgeSheet);
+				await judgeSpritesheet.parse();
 
-				await Promise.all([agentSpritesheet.parse(), judgeSpritesheet.parse()]);
-
-				// Store animation textures
-				sheetDataRef.current = {
-					agentIdle: agentSpritesheet.animations.idle,
-					agentSpeak: agentSpritesheet.animations.speak,
-					judgeIdle: judgeSpritesheet.animations.idle,
-					judgeSpeak: judgeSpritesheet.animations.speak,
+				// Store judge animation textures
+				judgeSheetRef.current = {
+					idle: judgeSpritesheet.animations.idle,
+					speak: judgeSpritesheet.animations.speak,
 				};
 
 				// Add agents and judges if debate is loaded
@@ -234,20 +259,41 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 					const agents = extractAgents(debate);
 					const judges = extractJudges(debate);
 
+					// Shuffle sprite indices to randomly assign to agents
+					const spriteIndices = agents.map((_, i) => i % AGENT_SPRITE_COUNT);
+					// Simple shuffle using debate topic as seed for consistency
+					const seed = debate.session.topic.length;
+					for (let i = spriteIndices.length - 1; i > 0; i--) {
+						const j = (seed + i * 7) % (i + 1);
+						[spriteIndices[i], spriteIndices[j]] = [
+							spriteIndices[j],
+							spriteIndices[i],
+						];
+					}
+
 					// Position agents
 					const agentPositions = getAgentPositions(agents.length);
+					// Scale: sprite frames are 512px tall, we want ~55px in scene
+					const agentScale = 55 / 512;
+
 					for (const [i, agent] of agents.entries()) {
 						const pos = agentPositions[i];
+						const sheetIndex = spriteIndices[i];
+						const sheet = agentSpritesheets[sheetIndex];
+
+						// Store sprite data for this agent
+						spriteDataRef.current.set(agent.agentId, {
+							idle: sheet.animations.idle,
+							speak: sheet.animations.speak,
+						});
 
 						// Create animated sprite for agent
-						const sprite = new PIXI.AnimatedSprite(
-							agentSpritesheet.animations.idle,
-						);
+						const sprite = new PIXI.AnimatedSprite(sheet.animations.idle);
 						sprite.anchor.set(0.5, 1); // Bottom-center anchor
+						sprite.scale.set(agentScale);
 						sprite.x = pos.x;
 						sprite.y = pos.y;
 						sprite.animationSpeed = 0.08; // ~5 FPS for retro feel
-						sprite.tint = AGENT_TINTS[i % AGENT_TINTS.length];
 						sprite.name = agent.agentId;
 						sprite.play();
 
@@ -260,14 +306,24 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 
 					// Position judges at the bench
 					const judgePositions = getJudgePositions(judges.length);
+					// Scale for judges (slightly smaller)
+					const judgeScale = 45 / 512;
+
 					for (const [i, judge] of judges.entries()) {
 						const pos = judgePositions[i];
+
+						// Store sprite data for this judge
+						spriteDataRef.current.set(judge.judgeId, {
+							idle: judgeSpritesheet.animations.idle,
+							speak: judgeSpritesheet.animations.speak,
+						});
 
 						// Create animated sprite for judge
 						const sprite = new PIXI.AnimatedSprite(
 							judgeSpritesheet.animations.idle,
 						);
 						sprite.anchor.set(0.5, 1);
+						sprite.scale.set(judgeScale);
 						sprite.x = pos.x;
 						sprite.y = pos.y;
 						sprite.animationSpeed = 0.06; // Slower for judges
@@ -293,6 +349,8 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 		return () => {
 			mounted = false;
 			spritesRef.current.clear();
+			spriteDataRef.current.clear();
+			judgeSheetRef.current = null;
 			if (appRef.current) {
 				appRef.current.destroy(true);
 				appRef.current = null;
@@ -302,19 +360,17 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 
 	// Handle speaking state changes - switch animations
 	useEffect(() => {
-		if (!isLoaded || !sheetDataRef.current) return;
-
-		const sheets = sheetDataRef.current;
+		if (!isLoaded) return;
 
 		// Update all sprites based on speaking state
 		for (const [id, sprite] of spritesRef.current) {
 			const isSpeaking = id === speakingId;
-			const isJudge = id.toLowerCase().includes("judge");
+			const spriteData = spriteDataRef.current.get(id);
+
+			if (!spriteData) continue;
 
 			// Determine which animation to use
-			const idleTextures = isJudge ? sheets.judgeIdle : sheets.agentIdle;
-			const speakTextures = isJudge ? sheets.judgeSpeak : sheets.agentSpeak;
-			const targetTextures = isSpeaking ? speakTextures : idleTextures;
+			const targetTextures = isSpeaking ? spriteData.speak : spriteData.idle;
 
 			// Only switch if different animation
 			if (sprite.textures !== targetTextures) {
