@@ -1,0 +1,42 @@
+{
+	"frames": {
+		"agent_idle_0": {
+			"frame": { "x": 0, "y": 0, "w": 256, "h": 512 }
+		},
+		"agent_idle_1": {
+			"frame": { "x": 256, "y": 0, "w": 256, "h": 512 }
+		},
+		"agent_idle_2": {
+			"frame": { "x": 512, "y": 0, "w": 256, "h": 512 }
+		},
+		"agent_idle_3": {
+			"frame": { "x": 768, "y": 0, "w": 256, "h": 512 }
+		},
+		"agent_speak_0": {
+			"frame": { "x": 0, "y": 512, "w": 256, "h": 512 }
+		},
+		"agent_speak_1": {
+			"frame": { "x": 256, "y": 512, "w": 256, "h": 512 }
+		},
+		"agent_speak_2": {
+			"frame": { "x": 512, "y": 512, "w": 256, "h": 512 }
+		},
+		"agent_speak_3": {
+			"frame": { "x": 768, "y": 512, "w": 256, "h": 512 }
+		}
+	},
+	"meta": {
+		"image": "agent-6-spritesheet.png",
+		"size": { "w": 1024, "h": 1024 },
+		"scale": 1
+	},
+	"animations": {
+		"idle": ["agent_idle_0", "agent_idle_1", "agent_idle_2", "agent_idle_3"],
+		"speak": [
+			"agent_speak_0",
+			"agent_speak_1",
+			"agent_speak_2",
+			"agent_speak_3"
+		]
+	}
+}

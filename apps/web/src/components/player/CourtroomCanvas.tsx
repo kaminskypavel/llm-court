@@ -40,7 +40,7 @@ type CourtroomCanvasProps = {
 };
 
 // Number of different agent sprite variants
-const AGENT_SPRITE_COUNT = 4;
+const AGENT_SPRITE_COUNT = 8;
 
 // Sprite info per agent (which spritesheet and its animations)
 type AgentSpriteData = {
