@@ -5,10 +5,11 @@ import {
 	Coins,
 	Loader2,
 	MessageSquare,
+	Palette,
 	ScrollText,
 	Zap,
 } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,6 +24,7 @@ import {
 import { saveToRecent } from "@/lib/player/storage";
 import { AriaLiveAnnouncer } from "./AriaLiveAnnouncer";
 import { CollapsibleSidebar } from "./CollapsibleSidebar";
+import { COURTROOM_BG_COUNT } from "./CourtroomCanvas";
 import { DebateDropZone } from "./DebateDropZone";
 import { DynamicCourtroomCanvas } from "./DynamicCanvas";
 import { MobilePlayer } from "./MobilePlayer";
@@ -60,6 +62,12 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 
 	// High-frequency time for smooth scrubber
 	const currentTimeMs = usePlaybackTime(timeRef, isPlaying);
+
+	// Courtroom background selection
+	const [backgroundIndex, setBackgroundIndex] = useState(1);
+	const cycleBackground = useCallback(() => {
+		setBackgroundIndex((prev) => (prev % COURTROOM_BG_COUNT) + 1);
+	}, []);
 
 	// Responsive breakpoint
 	const isMobile = useIsMobile();
@@ -343,7 +351,20 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 							<DynamicCourtroomCanvas
 								currentStep={currentStep}
 								debate={context.debate}
+								backgroundIndex={backgroundIndex}
 							/>
+							{/* Background switcher button */}
+							<button
+								type="button"
+								onClick={cycleBackground}
+								className="absolute top-2 right-2 flex items-center gap-1 rounded bg-black/50 px-2 py-1 text-white text-xs transition-opacity hover:bg-black/70"
+								title={`Courtroom style ${backgroundIndex}/${COURTROOM_BG_COUNT} (click to change)`}
+							>
+								<Palette className="h-3 w-3" />
+								<span>
+									{backgroundIndex}/{COURTROOM_BG_COUNT}
+								</span>
+							</button>
 						</div>
 
 						{/* Bottom collapsible sidebar: Speech + Verdict */}

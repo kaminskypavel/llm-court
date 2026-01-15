@@ -37,11 +37,13 @@ type AnimatedSpriteRef = {
 type CourtroomCanvasProps = {
 	currentStep: StepTiming | null;
 	debate: ValidatedDebateOutput | null;
+	backgroundIndex?: number;
 };
 
-// Number of different sprite variants
+// Number of different sprite/background variants
 const AGENT_SPRITE_COUNT = 8;
 const JUDGE_SPRITE_COUNT = 4;
+export const COURTROOM_BG_COUNT = 4;
 
 // Sprite info per agent (which spritesheet and its animations)
 type AgentSpriteData = {
@@ -121,7 +123,11 @@ const getJudgePositions = (count: number) => {
 	return positions;
 };
 
-export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
+export function CourtroomCanvas({
+	currentStep,
+	debate,
+	backgroundIndex = 1,
+}: CourtroomCanvasProps) {
 	const [measureRef, bounds] = useMeasure();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const appRef = useRef<PixiApp | null>(null);
@@ -191,7 +197,10 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 				app.stage.addChild(container);
 
 				// Load background with NEAREST scaling
-				const bgTexture = await PIXI.Assets.load("/sprites/courtroom-bg.png");
+				const bgIndex = ((backgroundIndex - 1) % COURTROOM_BG_COUNT) + 1;
+				const bgTexture = await PIXI.Assets.load(
+					`/sprites/courtroom-bg-${bgIndex}.png`,
+				);
 				bgTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
 				const bg = new PIXI.Sprite(bgTexture);
 				container.addChild(bg);
@@ -371,7 +380,7 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 				appRef.current = null;
 			}
 		};
-	}, [bounds.width, bounds.height, debate]);
+	}, [bounds.width, bounds.height, debate, backgroundIndex]);
 
 	// Handle speaking state changes - switch animations
 	useEffect(() => {
