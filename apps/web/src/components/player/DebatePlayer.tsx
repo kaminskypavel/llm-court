@@ -16,7 +16,6 @@ import {
 	Volume2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/useMediaQuery";
@@ -297,6 +296,11 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 	}
 
 	// Desktop layout - new design
+	const progressPercent =
+		context.totalDurationMs > 0
+			? (currentTimeMs / context.totalDurationMs) * 100
+			: 0;
+
 	return (
 		<>
 			<AriaLiveAnnouncer
@@ -306,53 +310,50 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 			/>
 			<div className="flex h-full flex-col bg-background">
 				{/* Centered container */}
-				<div className="mx-auto flex h-full w-full max-w-[1400px] flex-col px-4">
+				<div className="mx-auto flex h-full w-full max-w-[1400px] flex-col px-6">
 					{/* Header: Title + Badges */}
-					<header className="shrink-0 py-4">
-						<h1 className="font-bold text-2xl tracking-tight md:text-3xl">
+					<header className="shrink-0 pt-6 pb-4">
+						<h1 className="font-bold text-3xl tracking-tight lg:text-4xl">
 							{context.debate?.session.topic ?? "Debate Player"}
 						</h1>
-						<div className="mt-2 flex flex-wrap items-center gap-2">
+						<div className="mt-3 flex flex-wrap items-center gap-3">
 							{context.debate && (
 								<>
-									<Badge
-										variant="secondary"
-										className="gap-1.5 rounded-full px-3 py-1"
-									>
-										<Clock className="h-3.5 w-3.5" />
-										{context.debate.agentDebate.rounds.length} rounds
-									</Badge>
-									<Badge
-										variant="secondary"
-										className="gap-1.5 rounded-full px-3 py-1"
-									>
-										<List className="h-3.5 w-3.5" />
-										{context.steps.length} steps
-									</Badge>
-									<Badge
-										variant={
+									<div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm">
+										<Clock className="h-4 w-4 text-muted-foreground" />
+										<span>
+											{context.debate.agentDebate.rounds.length} rounds
+										</span>
+									</div>
+									<div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm">
+										<List className="h-4 w-4 text-muted-foreground" />
+										<span>{context.steps.length} steps</span>
+									</div>
+									<div
+										className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm ${
 											context.debate.session.phase === "consensus_reached"
-												? "default"
+												? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
 												: context.debate.session.phase === "deadlock"
-													? "destructive"
-													: "secondary"
-										}
-										className="gap-1.5 rounded-full px-3 py-1"
+													? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+													: "bg-muted"
+										}`}
 									>
-										<Check className="h-3.5 w-3.5" />
-										{context.debate.session.phase.replace(/_/g, " ")}
-									</Badge>
+										<Check className="h-4 w-4" />
+										<span>
+											{context.debate.session.phase.replace(/_/g, " ")}
+										</span>
+									</div>
 								</>
 							)}
 						</div>
 					</header>
 
 					{/* Main content: Two columns */}
-					<div className="grid min-h-0 flex-1 gap-4 pb-4 lg:grid-cols-[1fr_400px]">
+					<div className="grid min-h-0 flex-1 gap-5 pb-4 lg:grid-cols-[1fr_420px]">
 						{/* Left column: Canvas + Current Speech */}
 						<div className="flex flex-col gap-4 overflow-hidden">
 							{/* Canvas */}
-							<div className="relative aspect-video overflow-hidden rounded-lg border bg-[#1a1208]">
+							<div className="relative aspect-video overflow-hidden rounded-xl border-2 border-border/50 bg-[#1a1208] shadow-lg">
 								<DynamicCourtroomCanvas
 									currentStep={currentStep}
 									debate={context.debate}
@@ -362,10 +363,10 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 								<button
 									type="button"
 									onClick={cycleBackground}
-									className="absolute top-3 right-3 flex items-center gap-1.5 rounded-md bg-black/60 px-2.5 py-1.5 text-white text-xs backdrop-blur-sm transition-colors hover:bg-black/80"
+									className="absolute top-3 right-3 flex items-center gap-1.5 rounded-lg bg-black/70 px-3 py-2 font-medium text-white text-xs backdrop-blur-sm transition-colors hover:bg-black/90"
 									title={`Courtroom style ${backgroundIndex}/${COURTROOM_BG_COUNT}`}
 								>
-									<Palette className="h-3.5 w-3.5" />
+									<Palette className="h-4 w-4" />
 									{backgroundIndex}/{COURTROOM_BG_COUNT}
 								</button>
 								{/* Judge labels overlay */}
@@ -374,7 +375,7 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 										{getUniqueJudges(context.debate).map((judge) => (
 											<span
 												key={judge}
-												className="rounded bg-black/60 px-2 py-1 font-mono text-white text-xs backdrop-blur-sm"
+												className="rounded-lg bg-black/70 px-3 py-1.5 font-medium font-mono text-white text-xs backdrop-blur-sm"
 											>
 												{judge}
 											</span>
@@ -384,27 +385,31 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 							</div>
 
 							{/* Current Speech Panel */}
-							<Card className="shrink-0 p-4">
-								<div className="mb-3 flex items-center justify-between">
-									<h2 className="font-semibold text-lg">Current Speech</h2>
+							<div className="shrink-0 rounded-xl border-2 border-border/50 bg-card p-5 shadow-sm">
+								<div className="mb-4 flex items-center justify-between">
+									<h2 className="font-semibold text-xl">Current Speech</h2>
 									{context.debate?.finalVerdict && (
-										<Badge variant="default">Verdict</Badge>
+										<span className="rounded-lg bg-primary px-3 py-1.5 font-medium text-primary-foreground text-sm">
+											Verdict
+										</span>
 									)}
 								</div>
-								<div className="min-h-[80px] text-muted-foreground">
+								<div className="min-h-[100px] text-base leading-relaxed">
 									{currentStep ? (
 										<SpeechContent step={currentStep} />
 									) : (
-										<p className="italic">No speech selected</p>
+										<p className="text-muted-foreground italic">
+											No speech selected
+										</p>
 									)}
 								</div>
-							</Card>
+							</div>
 						</div>
 
 						{/* Right column: Transcript */}
-						<Card className="flex flex-col overflow-hidden">
-							<div className="shrink-0 border-b p-4">
-								<h2 className="font-semibold text-lg">Transcript</h2>
+						<div className="flex flex-col overflow-hidden rounded-xl border-2 border-border/50 bg-card shadow-sm">
+							<div className="shrink-0 border-b px-5 py-4">
+								<h2 className="font-semibold text-xl">Transcript</h2>
 							</div>
 							<div className="flex-1 overflow-y-auto">
 								<TranscriptList
@@ -416,98 +421,99 @@ export function DebatePlayer({ initialUrl }: DebatePlayerProps) {
 									}}
 								/>
 							</div>
-						</Card>
+						</div>
 					</div>
 
 					{/* Bottom: Timeline + Controls */}
-					<div className="shrink-0 border-t py-4">
-						{/* Timeline */}
-						<div className="mb-4">
+					<div className="shrink-0 border-border/50 border-t py-5">
+						{/* Timeline with progress */}
+						<div className="relative mb-5">
 							<input
 								type="range"
 								min={0}
-								max={context.totalDurationMs}
+								max={context.totalDurationMs || 100}
 								value={currentTimeMs}
 								onChange={(e) => seek(Number(e.target.value))}
-								className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+								className="relative z-10 h-2 w-full cursor-pointer appearance-none rounded-full bg-transparent [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-muted [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-md"
+								aria-label="Playback progress"
+							/>
+							<div
+								className="pointer-events-none absolute top-0 left-0 h-2 rounded-full bg-primary transition-all"
+								style={{ width: `${progressPercent}%` }}
 							/>
 						</div>
 
 						{/* Controls row */}
 						<div className="flex items-center justify-between">
 							{/* Time display */}
-							<div className="w-24 font-mono text-muted-foreground text-sm">
+							<div className="min-w-[100px] font-mono text-muted-foreground">
 								{formatTime(currentTimeMs)} /{" "}
 								{formatTime(context.totalDurationMs)}
 							</div>
 
 							{/* Playback controls */}
-							<div className="flex items-center gap-1">
-								<Button
-									variant="ghost"
-									size="icon"
+							<div className="flex items-center gap-2">
+								<button
+									type="button"
 									onClick={jumpToStart}
 									disabled={!canPlay}
-									className="h-10 w-10"
+									className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
 								>
 									<SkipBack className="h-5 w-5" />
-								</Button>
-								<Button
-									variant="ghost"
-									size="icon"
+								</button>
+								<button
+									type="button"
 									onClick={stepBackward}
 									disabled={!canPlay}
-									className="h-10 w-10"
+									className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
 								>
 									<Rewind className="h-5 w-5" />
-								</Button>
-								<Button
-									variant="default"
-									size="icon"
+								</button>
+								<button
+									type="button"
 									onClick={isPlaying ? pause : play}
 									disabled={!canPlay}
-									className="h-12 w-12 rounded-full"
+									className="flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background transition-all hover:scale-105 disabled:opacity-50"
 								>
 									{isPlaying ? (
-										<Pause className="h-6 w-6" />
+										<Pause className="h-7 w-7" />
 									) : (
-										<Play className="ml-0.5 h-6 w-6" />
+										<Play className="ml-1 h-7 w-7" />
 									)}
-								</Button>
-								<Button
-									variant="ghost"
-									size="icon"
+								</button>
+								<button
+									type="button"
 									onClick={stepForward}
 									disabled={!canPlay}
-									className="h-10 w-10"
+									className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
 								>
 									<FastForward className="h-5 w-5" />
-								</Button>
-								<Button
-									variant="ghost"
-									size="icon"
+								</button>
+								<button
+									type="button"
 									onClick={jumpToEnd}
 									disabled={!canPlay}
-									className="h-10 w-10"
+									className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
 								>
 									<SkipForward className="h-5 w-5" />
-								</Button>
+								</button>
 							</div>
 
 							{/* Speed controls */}
-							<div className="flex items-center gap-1">
+							<div className="flex items-center gap-1 rounded-lg border border-border p-1">
 								{[0.5, 1, 1.5, 2].map((speed) => (
-									<Button
+									<button
 										key={speed}
-										variant={
-											context.playbackSpeed === speed ? "default" : "ghost"
-										}
-										size="sm"
+										type="button"
 										onClick={() => setSpeed(speed)}
-										className="h-8 w-12 font-mono text-xs"
+										className={`h-9 w-14 rounded-md font-mono text-sm transition-colors ${
+											context.playbackSpeed === speed
+												? "bg-foreground text-background"
+												: "text-muted-foreground hover:bg-muted hover:text-foreground"
+										}`}
 									>
 										{speed}x
-									</Button>
+									</button>
 								))}
 							</div>
 						</div>
@@ -551,7 +557,7 @@ function TranscriptList({
 	onStepClick: (index: number) => void;
 }) {
 	return (
-		<div className="divide-y">
+		<div>
 			{steps.map((step, index) => {
 				const isActive = index === currentStepIndex;
 				const speaker =
@@ -574,27 +580,25 @@ function TranscriptList({
 						key={`${step.startMs}-${step.step.type}`}
 						type="button"
 						onClick={() => onStepClick(index)}
-						className={`w-full p-4 text-left transition-colors hover:bg-muted/50 ${
-							isActive ? "bg-muted" : ""
+						className={`w-full border-border/50 border-b px-5 py-4 text-left transition-colors hover:bg-muted/50 ${
+							isActive ? "bg-muted/80" : ""
 						}`}
 					>
-						<div className="mb-1.5 flex items-center justify-between">
-							<div className="flex items-center gap-2">
-								<Volume2 className="h-4 w-4 text-muted-foreground" />
-								<span className="font-medium text-sm">{speaker}</span>
+						<div className="mb-2 flex items-center justify-between">
+							<div className="flex items-center gap-3">
+								<Volume2 className="h-5 w-5 text-muted-foreground" />
+								<span className="font-semibold">{speaker}</span>
 								{confidence !== null && (
-									<Badge variant="secondary" className="text-xs">
+									<span className="rounded-md bg-muted px-2 py-0.5 font-medium text-muted-foreground text-sm">
 										{Math.round(confidence * 100)}%
-									</Badge>
+									</span>
 								)}
 							</div>
-							<span className="font-mono text-muted-foreground text-xs">
+							<span className="font-mono text-muted-foreground text-sm">
 								{formatTime(step.startMs)}
 							</span>
 						</div>
-						<p className="line-clamp-2 text-muted-foreground text-sm">
-							{content}
-						</p>
+						<p className="line-clamp-2 pl-8 text-muted-foreground">{content}</p>
 					</button>
 				);
 			})}
