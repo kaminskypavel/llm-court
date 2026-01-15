@@ -18,6 +18,76 @@ bun run apps/engine/src/cli.ts debate -c examples/local-cli-debate.json --debug
 bun run apps/engine/src/cli.ts validate examples/local-cli-debate.json
 ```
 
+## CLI Reference
+
+### `debate` Command
+
+Run a debate session.
+
+```bash
+llm-court debate [options]
+```
+
+| Flag | Description |
+|------|-------------|
+| `-c, --config <path>` | **(Required)** Path to debate configuration JSON file |
+| `-o, --output <path>` | Save debate results to JSON file |
+| `-r, --resume <checkpoint>` | Resume from a checkpoint file |
+| `--dry-run` | Validate config and show summary without running |
+| `--force` | Overwrite existing output file |
+| `--json-logs` | Output structured JSON logs to stderr (for machine parsing) |
+| `--debug` | Enable verbose debug logging |
+| `--allow-external-paths` | Allow file paths outside current working directory |
+
+**Examples:**
+
+```bash
+# Basic run with output file
+bun run apps/engine/src/cli.ts debate -c config.json -o results.json
+
+# Debug mode with JSON logs for parsing
+bun run apps/engine/src/cli.ts debate -c config.json --debug --json-logs 2>logs.jsonl
+
+# Dry run to validate config
+bun run apps/engine/src/cli.ts debate -c config.json --dry-run
+
+# Resume from checkpoint
+bun run apps/engine/src/cli.ts debate -c config.json -r checkpoints/session-123.json
+```
+
+### `validate` Command
+
+Validate a configuration file without running.
+
+```bash
+llm-court validate <path>
+```
+
+**Example:**
+
+```bash
+bun run apps/engine/src/cli.ts validate examples/local-cli-debate.json
+```
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `DEBUG` | Enable scoped logging. Set to `*` for all, or comma-separated scopes like `Debate,Agent` |
+| `OPENAI_API_KEY` | API key for OpenAI provider |
+| `ANTHROPIC_API_KEY` | API key for Anthropic provider |
+| `GOOGLE_API_KEY` | API key for Google provider |
+
+**Example:**
+
+```bash
+# Enable all debug logging
+DEBUG=* bun run apps/engine/src/cli.ts debate -c config.json
+
+# Enable only agent logging
+DEBUG=Agent bun run apps/engine/src/cli.ts debate -c config.json
+```
+
 ## Running with Local LLMs
 
 ### Codex CLI (ChatGPT Pro subscription)
@@ -142,16 +212,6 @@ For other local models (llama.cpp, ollama, etc.), use the generic `cli` provider
   "judgeConsensusThreshold": 0.6,
   "contextTopology": "last_round_with_self"
 }
-```
-
-## Environment Variables
-
-For API-based providers, set the appropriate API keys:
-
-```bash
-export OPENAI_API_KEY="sk-..."
-export ANTHROPIC_API_KEY="sk-ant-..."
-export GOOGLE_API_KEY="..."
 ```
 
 ## Output
