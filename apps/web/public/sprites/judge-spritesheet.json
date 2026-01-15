@@ -1,0 +1,85 @@
+{
+	"frames": {
+		"judge_idle_0": {
+			"frame": {
+				"x": 0,
+				"y": 0,
+				"w": 32,
+				"h": 32
+			}
+		},
+		"judge_idle_1": {
+			"frame": {
+				"x": 32,
+				"y": 0,
+				"w": 32,
+				"h": 32
+			}
+		},
+		"judge_idle_2": {
+			"frame": {
+				"x": 64,
+				"y": 0,
+				"w": 32,
+				"h": 32
+			}
+		},
+		"judge_idle_3": {
+			"frame": {
+				"x": 96,
+				"y": 0,
+				"w": 32,
+				"h": 32
+			}
+		},
+		"judge_speak_0": {
+			"frame": {
+				"x": 128,
+				"y": 0,
+				"w": 32,
+				"h": 32
+			}
+		},
+		"judge_speak_1": {
+			"frame": {
+				"x": 160,
+				"y": 0,
+				"w": 32,
+				"h": 32
+			}
+		},
+		"judge_speak_2": {
+			"frame": {
+				"x": 192,
+				"y": 0,
+				"w": 32,
+				"h": 32
+			}
+		},
+		"judge_speak_3": {
+			"frame": {
+				"x": 224,
+				"y": 0,
+				"w": 32,
+				"h": 32
+			}
+		}
+	},
+	"meta": {
+		"image": "judge-spritesheet.png",
+		"size": {
+			"w": 256,
+			"h": 32
+		},
+		"scale": 1
+	},
+	"animations": {
+		"idle": ["judge_idle_0", "judge_idle_1", "judge_idle_2", "judge_idle_3"],
+		"speak": [
+			"judge_speak_0",
+			"judge_speak_1",
+			"judge_speak_2",
+			"judge_speak_3"
+		]
+	}
+}

@@ -1,6 +1,5 @@
 "use client";
 
-import { gsap } from "gsap";
 import { useEffect, useRef, useState } from "react";
 import useMeasure from "react-use-measure";
 import type { ValidatedDebateOutput } from "@/lib/player/schema";
@@ -9,21 +8,46 @@ import type { StepTiming } from "@/lib/player/types";
 // Types for PixiJS (loaded dynamically)
 type PixiApp = {
 	stage: {
-		children: Array<{
-			name?: string;
-			scale: { x: number; y: number };
-			alpha: number;
-		}>;
 		addChild: (child: unknown) => void;
+		scale: { x: number; y: number };
 	};
 	renderer: { resize: (width: number, height: number) => void };
 	destroy: (removeView?: boolean) => void;
+	ticker: {
+		add: (fn: () => void) => void;
+		remove: (fn: () => void) => void;
+	};
+};
+
+type AnimatedSpriteRef = {
+	name?: string;
+	x: number;
+	y: number;
+	anchor: { set: (x: number, y?: number) => void };
+	scale: { set: (x: number, y?: number) => void };
+	tint: number;
+	alpha: number;
+	animationSpeed: number;
+	textures: unknown[];
+	play: () => void;
+	gotoAndPlay: (frame: number) => void;
+	filters: unknown[];
 };
 
 type CourtroomCanvasProps = {
 	currentStep: StepTiming | null;
 	debate: ValidatedDebateOutput | null;
 };
+
+// Agent color tints (different colors for each agent)
+const AGENT_TINTS = [
+	0x4a7cc9, // Blue
+	0xc94a4a, // Red
+	0x4ac97c, // Green
+	0x9b4ac9, // Purple
+	0xc9984a, // Orange
+	0x4ac9c9, // Cyan
+];
 
 // Extract unique agents from debate rounds
 function extractAgents(debate: ValidatedDebateOutput | null) {
@@ -61,33 +85,37 @@ function extractJudges(debate: ValidatedDebateOutput | null) {
 	return Array.from(judgeSet.values());
 }
 
-// Agent position configurations - spread agents across the stage
+// Native resolution (8-bit style)
+const NATIVE_WIDTH = 320;
+const NATIVE_HEIGHT = 180;
+
+// Agent positions in native resolution
 const getAgentPositions = (count: number) => {
 	const positions: { x: number; y: number }[] = [];
-	const startX = 0.15;
-	const endX = 0.85;
+	const startX = 48;
+	const endX = 272;
 	const spacing = count > 1 ? (endX - startX) / (count - 1) : 0;
 
 	for (let i = 0; i < count; i++) {
 		positions.push({
-			x: count === 1 ? 0.5 : startX + i * spacing,
-			y: 0.55,
+			x: count === 1 ? 160 : startX + i * spacing,
+			y: 130,
 		});
 	}
 	return positions;
 };
 
-// Judge position for the bench
+// Judge positions
 const getJudgePositions = (count: number) => {
 	const positions: { x: number; y: number }[] = [];
-	const startX = 0.3;
-	const endX = 0.7;
+	const startX = 100;
+	const endX = 220;
 	const spacing = count > 1 ? (endX - startX) / (count - 1) : 0;
 
 	for (let i = 0; i < count; i++) {
 		positions.push({
-			x: count === 1 ? 0.5 : startX + i * spacing,
-			y: 0.22,
+			x: count === 1 ? 160 : startX + i * spacing,
+			y: 55,
 		});
 	}
 	return positions;
@@ -97,6 +125,13 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 	const [measureRef, bounds] = useMeasure();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const appRef = useRef<PixiApp | null>(null);
+	const spritesRef = useRef<Map<string, AnimatedSpriteRef>>(new Map());
+	const sheetDataRef = useRef<{
+		agentIdle: unknown[];
+		agentSpeak: unknown[];
+		judgeIdle: unknown[];
+		judgeSpeak: unknown[];
+	} | null>(null);
 	const [isLoaded, setIsLoaded] = useState(false);
 	const [speakingId, setSpeakingId] = useState<string | null>(null);
 
@@ -117,7 +152,7 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 		}
 	}, [currentStep]);
 
-	// Initialize PixiJS
+	// Initialize PixiJS with pixel-perfect settings
 	useEffect(() => {
 		if (!canvasRef.current || bounds.width === 0 || bounds.height === 0) return;
 
@@ -130,74 +165,120 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 
 				if (!mounted || !canvasRef.current) return;
 
-				// PixiJS v7 uses constructor options
+				// Calculate scale to fit while maintaining aspect ratio
+				const scaleX = bounds.width / NATIVE_WIDTH;
+				const scaleY = bounds.height / NATIVE_HEIGHT;
+				const scale = Math.min(scaleX, scaleY);
+
+				// PixiJS v7 with pixel-perfect settings
 				const app = new PIXI.Application({
 					view: canvasRef.current,
 					width: bounds.width,
 					height: bounds.height,
-					backgroundColor: 0x1a120e,
-					antialias: true,
-					resolution: window.devicePixelRatio || 1,
-					autoDensity: true,
+					backgroundColor: 0x1a1208,
+					antialias: false, // CRITICAL: No smoothing for pixel art
+					resolution: 1, // Don't use devicePixelRatio
+					autoDensity: false,
 				});
+
+				// Set default scale mode for all textures
+				PIXI.BaseTexture.defaultOptions.scaleMode = PIXI.SCALE_MODES.NEAREST;
 
 				appRef.current = app as unknown as PixiApp;
 
-				// Load background
-				const bgTexture = await PIXI.Assets.load("/sprites/courtroom-bg.svg");
+				// Create container for scaling
+				const container = new PIXI.Container();
+				container.scale.set(scale);
+				// Center the container
+				container.x = (bounds.width - NATIVE_WIDTH * scale) / 2;
+				container.y = (bounds.height - NATIVE_HEIGHT * scale) / 2;
+				app.stage.addChild(container);
+
+				// Load background with NEAREST scaling
+				const bgTexture = await PIXI.Assets.load("/sprites/courtroom-bg.png");
+				bgTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
 				const bg = new PIXI.Sprite(bgTexture);
-				bg.width = bounds.width;
-				bg.height = bounds.height;
-				app.stage.addChild(bg);
+				container.addChild(bg);
+
+				// Load sprite sheets
+				const [agentSheet, judgeSheet] = await Promise.all([
+					fetch("/sprites/agent-spritesheet.json").then((r) => r.json()),
+					fetch("/sprites/judge-spritesheet.json").then((r) => r.json()),
+				]);
+
+				const [agentTexture, judgeTexture] = await Promise.all([
+					PIXI.Assets.load("/sprites/agent-spritesheet.png"),
+					PIXI.Assets.load("/sprites/judge-spritesheet.png"),
+				]);
+
+				// Set NEAREST scaling
+				agentTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+				judgeTexture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
+
+				// Create sprite sheet objects
+				const agentSpritesheet = new PIXI.Spritesheet(agentTexture, agentSheet);
+				const judgeSpritesheet = new PIXI.Spritesheet(judgeTexture, judgeSheet);
+
+				await Promise.all([agentSpritesheet.parse(), judgeSpritesheet.parse()]);
+
+				// Store animation textures
+				sheetDataRef.current = {
+					agentIdle: agentSpritesheet.animations.idle,
+					agentSpeak: agentSpritesheet.animations.speak,
+					judgeIdle: judgeSpritesheet.animations.idle,
+					judgeSpeak: judgeSpritesheet.animations.speak,
+				};
 
 				// Add agents and judges if debate is loaded
 				if (debate) {
 					const agents = extractAgents(debate);
 					const judges = extractJudges(debate);
 
-					// Load textures
-					const agentIdleTexture = await PIXI.Assets.load(
-						"/sprites/agent-idle.svg",
-					);
-					const judgeIdleTexture = await PIXI.Assets.load(
-						"/sprites/judge-idle.svg",
-					);
-					const podiumTexture = await PIXI.Assets.load("/sprites/podium.svg");
-
 					// Position agents
 					const agentPositions = getAgentPositions(agents.length);
 					for (const [i, agent] of agents.entries()) {
 						const pos = agentPositions[i];
 
-						// Add podium first (behind agent)
-						const podium = new PIXI.Sprite(podiumTexture);
-						podium.anchor.set(0.5, 0);
-						podium.x = pos.x * bounds.width;
-						podium.y = pos.y * bounds.height + 35;
-						podium.scale.set(0.5);
-						app.stage.addChild(podium);
-
-						// Add agent sprite
-						const sprite = new PIXI.Sprite(agentIdleTexture);
-						sprite.anchor.set(0.5);
-						sprite.x = pos.x * bounds.width;
-						sprite.y = pos.y * bounds.height;
-						sprite.scale.set(0.7);
+						// Create animated sprite for agent
+						const sprite = new PIXI.AnimatedSprite(
+							agentSpritesheet.animations.idle,
+						);
+						sprite.anchor.set(0.5, 1); // Bottom-center anchor
+						sprite.x = pos.x;
+						sprite.y = pos.y;
+						sprite.animationSpeed = 0.08; // ~5 FPS for retro feel
+						sprite.tint = AGENT_TINTS[i % AGENT_TINTS.length];
 						sprite.name = agent.agentId;
-						app.stage.addChild(sprite);
+						sprite.play();
+
+						container.addChild(sprite);
+						spritesRef.current.set(
+							agent.agentId,
+							sprite as unknown as AnimatedSpriteRef,
+						);
 					}
 
 					// Position judges at the bench
 					const judgePositions = getJudgePositions(judges.length);
 					for (const [i, judge] of judges.entries()) {
 						const pos = judgePositions[i];
-						const sprite = new PIXI.Sprite(judgeIdleTexture);
-						sprite.anchor.set(0.5);
-						sprite.x = pos.x * bounds.width;
-						sprite.y = pos.y * bounds.height;
-						sprite.scale.set(0.6);
+
+						// Create animated sprite for judge
+						const sprite = new PIXI.AnimatedSprite(
+							judgeSpritesheet.animations.idle,
+						);
+						sprite.anchor.set(0.5, 1);
+						sprite.x = pos.x;
+						sprite.y = pos.y;
+						sprite.animationSpeed = 0.06; // Slower for judges
 						sprite.name = judge.judgeId;
-						app.stage.addChild(sprite);
+						sprite.play();
+
+						container.addChild(sprite);
+						spritesRef.current.set(
+							judge.judgeId,
+							sprite as unknown as AnimatedSpriteRef,
+						);
 					}
 				}
 
@@ -211,6 +292,7 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 
 		return () => {
 			mounted = false;
+			spritesRef.current.clear();
 			if (appRef.current) {
 				appRef.current.destroy(true);
 				appRef.current = null;
@@ -218,50 +300,52 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 		};
 	}, [bounds.width, bounds.height, debate]);
 
-	// Handle resize
+	// Handle speaking state changes - switch animations
 	useEffect(() => {
-		if (appRef.current && bounds.width > 0 && bounds.height > 0) {
-			appRef.current.renderer.resize(bounds.width, bounds.height);
-		}
-	}, [bounds.width, bounds.height]);
+		if (!isLoaded || !sheetDataRef.current) return;
 
-	// Animate speaking state
-	useEffect(() => {
-		if (!appRef.current || !isLoaded) return;
+		const sheets = sheetDataRef.current;
 
-		const app = appRef.current;
+		// Update all sprites based on speaking state
+		for (const [id, sprite] of spritesRef.current) {
+			const isSpeaking = id === speakingId;
+			const isJudge = id.toLowerCase().includes("judge");
 
-		// Animate all sprites based on speaking state
-		for (const child of app.stage.children) {
-			if (!child.name) continue;
+			// Determine which animation to use
+			const idleTextures = isJudge ? sheets.judgeIdle : sheets.agentIdle;
+			const speakTextures = isJudge ? sheets.judgeSpeak : sheets.agentSpeak;
+			const targetTextures = isSpeaking ? speakTextures : idleTextures;
 
-			const isSpeaking = child.name === speakingId;
+			// Only switch if different animation
+			if (sprite.textures !== targetTextures) {
+				sprite.textures = targetTextures as unknown[];
+				sprite.animationSpeed = isSpeaking ? 0.15 : 0.08; // Faster when speaking
+				sprite.gotoAndPlay(0);
+			}
 
-			gsap.to(child.scale, {
-				x: isSpeaking ? 0.85 : 0.7,
-				y: isSpeaking ? 0.85 : 0.7,
-				duration: 0.3,
-				ease: "power2.out",
-			});
-
-			gsap.to(child, {
-				alpha: isSpeaking ? 1 : 0.7,
-				duration: 0.3,
-				ease: "power2.out",
-			});
+			// Highlight speaking character
+			sprite.alpha = isSpeaking ? 1 : 0.7;
 		}
 	}, [speakingId, isLoaded]);
 
 	return (
-		<div ref={measureRef} className="relative h-full w-full overflow-hidden">
+		<div
+			ref={measureRef}
+			className="relative h-full w-full overflow-hidden bg-[#1a1208]"
+		>
 			<canvas
 				ref={canvasRef}
 				className="h-full w-full"
-				style={{ display: isLoaded ? "block" : "none" }}
+				style={{
+					display: isLoaded ? "block" : "none",
+					imageRendering: "pixelated", // CSS fallback for crisp pixels
+				}}
 			/>
 			{!isLoaded && (
-				<div className="absolute inset-0 flex items-center justify-center bg-muted/50">
-					<p className="text-muted-foreground text-sm">Loading courtroom...</p>
+				<div className="absolute inset-0 flex items-center justify-center">
+					<p className="font-mono text-[#c9a227] text-sm">
+						Loading courtroom...
+					</p>
 				</div>
 			)}
 		</div>
