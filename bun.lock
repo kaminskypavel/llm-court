@@ -31,6 +31,7 @@
         "@ai-sdk/anthropic": "catalog:",
         "@ai-sdk/google": "catalog:",
         "@ai-sdk/openai": "catalog:",
+        "@llm-court/logs": "workspace:*",
         "@llm-court/shared": "workspace:*",
         "ai": "catalog:",
         "commander": "catalog:",
