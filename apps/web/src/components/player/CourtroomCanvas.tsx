@@ -290,15 +290,15 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 							speak: sheet.animations.speak,
 						});
 
-						// Create animated sprite for agent
+						// Create animated sprite for agent (static idle, animated when speaking)
 						const sprite = new PIXI.AnimatedSprite(sheet.animations.idle);
 						sprite.anchor.set(0.5, 1); // Bottom-center anchor
 						sprite.scale.set(agentScale);
 						sprite.x = pos.x;
 						sprite.y = pos.y;
-						sprite.animationSpeed = 0.08; // ~5 FPS for retro feel
+						sprite.animationSpeed = 0.12;
 						sprite.name = agent.agentId;
-						sprite.play();
+						sprite.gotoAndStop(0); // Static idle - don't animate
 
 						container.addChild(sprite);
 						spritesRef.current.set(
@@ -336,15 +336,15 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 							speak: sheet.animations.speak,
 						});
 
-						// Create animated sprite for judge
+						// Create animated sprite for judge (static idle, animated when speaking)
 						const sprite = new PIXI.AnimatedSprite(sheet.animations.idle);
 						sprite.anchor.set(0.5, 1);
 						sprite.scale.set(judgeScale);
 						sprite.x = pos.x;
 						sprite.y = pos.y;
-						sprite.animationSpeed = 0.06; // Slower for judges
+						sprite.animationSpeed = 0.1;
 						sprite.name = judge.judgeId;
-						sprite.play();
+						sprite.gotoAndStop(0); // Static idle - don't animate
 
 						container.addChild(sprite);
 						spritesRef.current.set(
@@ -390,8 +390,12 @@ export function CourtroomCanvas({ currentStep, debate }: CourtroomCanvasProps) {
 			// Only switch if different animation
 			if (sprite.textures !== targetTextures) {
 				sprite.textures = targetTextures as unknown[];
-				sprite.animationSpeed = isSpeaking ? 0.15 : 0.08; // Faster when speaking
-				sprite.gotoAndPlay(0);
+				if (isSpeaking) {
+					sprite.animationSpeed = 0.12;
+					sprite.play(); // Animate when speaking
+				} else {
+					sprite.gotoAndStop(0); // Static when idle
+				}
 			}
 
 			// Highlight speaking character
